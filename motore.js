@@ -223,7 +223,7 @@ function targetsFor(G,F,e){return enemies(G,F).filter(o=>{const r=dist(F,o);if(e
 
 /* ---- IA ---- */
 let curN=1;
-function moveAI(G,F){
+function moveAI(G,F,soloMeta){
   F.lastCost=0;if(F.trat>0||F.lega>0)return 0;const freeV=(F.el==='V'?2:0),scat=false,avail=Math.max(0,F.st-2);
   const en=enemies(G,F);if(!en.length)return 0;const adj0=en.filter(o=>dist(F,o)<=1),guard=adj0.some(o=>o.has('T6'));
   let budget=Math.min(4+freeV,avail+freeV);if(guard)budget=Math.min(budget,1);if(!budget)return 0;const freeDis=F.has('V4');const al=allies(G,F);
@@ -232,15 +232,15 @@ function moveAI(G,F){
   const slMax=Math.max(0,...F.hand.map(d=>fxOf(d.c).slancio||0));
   const dw=o=>dist(F,o)+(o.isPet?RULES.petMv:0);const tgt=(F.taunt&&en.find(o=>o.id===F.taunt))||en.reduce((a,b)=>dw(a)<=dw(b)?a:b);
   let best=null,bs=-1e9;
-  for(const [k,steps] of bfs(G,F,budget)){const[x,y]=k.split(',').map(Number),p={x,y},adjE=en.filter(o=>dist(p,o)<=1).length;let s;
-    const dash=scat&&steps>1&&en.some(o=>dist(F,o)-dist(p,o)===steps),cost=dash?Math.ceil(steps/2):Math.max(0,steps-freeV);if(cost>avail)continue;
+  for(const [k,steps,cst] of (soloMeta?[...reach(G,F,budget,avail)].map(([k,r])=>[k,r.s,r.c]):[...bfs(G,F,budget)])){const[x,y]=k.split(',').map(Number),p={x,y},adjE=en.filter(o=>dist(p,o)<=1).length;let s;
+    const dash=scat&&steps>1&&en.some(o=>dist(F,o)-dist(p,o)===steps),cost=soloMeta?cst:dash?Math.ceil(steps/2):Math.max(0,steps-freeV);if(cost>avail)continue;
     if(role==='ranged'){const d=dist(p,tgt);s=(d<=maxR&&los(G,p,tgt)?10:-Math.abs(d-maxR)*2)-adjE*(F.gun?1:8)+(cover(G,p,tgt)?4:0)+Math.min(d,maxR)*0.5;}
     else if(role==='healer'){const w=al.reduce((a,b)=>b.pf/b.pfMax<a.pf/a.pfMax?b:a);const dA=dist(p,w),dE=Math.min(...en.map(o=>dist(p,o)));
       s=(dA<=3?6:-dA)-adjE*8+(cover(G,p,tgt)?3:0)+Math.min(dE,4)+(en.some(o=>dist(p,o)>1&&dist(p,o)<=maxR&&los(G,p,o))?3:0);}
     else{const d=dist(p,tgt);s=-d*3+(d<=1?10:0)-(role==='tank'?0:Math.max(0,adjE-1)*2);if(d<=1&&slMax)s+=Math.min(slMax,Math.floor(steps/2))*1.5;}
     if(RULES.ado&&!freeDis){const lv=adj0.filter(o=>dist(p,o)>1&&!(o.trat>0||o.prono>0||o.sbil)).length;s-=lv*(F.fz==='dono'?(role==='ranged'||role==='healer'?2:4):(role==='healer'?RULES.aiH:role==='ranged'?RULES.aiR:4));}
     s-=cost*0.3+steps*0.05;if(s>bs){bs=s;best={x,y,steps,cost,dash};}}
-  if(best&&best.steps>0){F.st-=best.cost;F.lastCost=best.cost;F.lastDash=best.dash;F.x=best.x;F.y=best.y;return best.steps;}return 0;}
+  if(soloMeta)return best&&best.steps>0?[best.x,best.y]:null;if(best&&best.steps>0){F.st-=best.cost;F.lastCost=best.cost;F.lastDash=best.dash;F.x=best.x;F.y=best.y;return best.steps;}return 0;}
 function choose(G,F){
   let best={d:null,t:null,s:-1e9};const en=enemies(G,F),al=allies(G,F);
   const dmax=canDebt(F)?3:0;
@@ -465,13 +465,13 @@ function hit0(G,F,T,d,a,e,dmg,o,L,arrows){
   }
   L.push(`→ ${nm(T)} ${dtxt} → <b>${fin} ${fin===1?'danno':'danni'}</b>${T.pf<=0?' · <b>'+T.name+' è a terra</b>':''}.${extra}`);
 }
-function exchange(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.id].ai?manual[F.id]:null;
+function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.id].ai?manual[F.id]:null;
   const L=[],arrows=[];curN=n;const alive=()=>G.fs.filter(f=>f.pf>0);
   alive().forEach(F=>{F.spUsed=false;F.slan=F.slanNext||0;F.slanNext=0;if(RULES.spExp&&F.spAge)for(const k in F.spir)if(F.spAge[k]<n-1){delete F.spir[k];}if(n>1){if(F.noRec){F.noRec=false;if(RULES.fulm==='mezzo')F.st+=1;}else F.st=Math.min(F.stMax,F.st+RULES.stRec);}F.debtNow=false;F.exh=false;if(F.adoUsed&&F.adoUsed<n)F.adoUsed=0;F.sbil=F.sbilNext;F.sbilNext=false;Object.assign(F.spir,F.spirNext);F.spirNext={};
     F.stx=F.stxNext;F.stxNext={};F.bDmg=F.bDmgNext;F.bDmgNext=0;F.bVel=F.bVelNext;F.bVelNext=0;F.taunt=F.tauntNext;F.tauntNext=null;
     F.defCount=0;F.rdTmp=0;F.movedNow=0;F.x3=false;F.acted=false;F.interr=null;F.card=null;F.tgt=null;F.vel=0;});
   const moves=[];const sp0=new Map(G.fs.map(F=>[F.id,{...F.spir,...F.spirNext}]));
-  alive().sort((a,b)=>b.mod.DES-a.mod.DES).forEach(F=>{const fx=F.x,fy=F.y;if(F.isPet){const m=petMove(G,F);if(m){moves.push({a:[fx,fy],b:[F.x,F.y],team:F.team});L.push(`${nm(F)} avanza di ${m}.`);}return;}if(F.trat>0){L.push(`${nm(F)} è Trattenuto e non si muove.`);return;}
+  if(RULES.movSim)yield* muoviTutti(G,n,man,L,arrows,moves);else alive().sort((a,b)=>b.mod.DES-a.mod.DES).forEach(F=>{const fx=F.x,fy=F.y;if(F.isPet){const m=petMove(G,F);if(m){moves.push({a:[fx,fy],b:[F.x,F.y],team:F.team});L.push(`${nm(F)} avanza di ${m}.`);}return;}if(F.trat>0){L.push(`${nm(F)} è Trattenuto e non si muove.`);return;}
     const adj0=enemies(G,F).filter(o=>dist(F,o)<=1);const s=man(F)?applyMove(G,F,man(F).move,L):moveAI(G,F);F.stats.moved+=s;F.movedNow=s;
     if(s&&RULES.ado&&!(RULES.v4ado&&F.has('V4')))adj0.filter(o=>o.pf>0&&dist(F,o)>1&&!(o.trat>0||o.prono>0||o.sbil)&&!o.adoUsed).forEach(o=>{o.adoUsed=n;const v=3+Math.max(o.mod.SAG,o.mod.DES,o.mod.FOR,o.mod.INT||0),x=Math.max(0,v-rdOf(F));hurt(F,x);o.stats.dmg+=x;o.stats.ado=(o.stats.ado||0)+1;L.push(`${nm(o)} colpisce ${nm(F)} che si disimpegna senza Schivata né Aggiramento: <b>attacco di opportunità</b>, ${x} danni.`);arrows.push({a:[o.x,o.y],b:[F.x,F.y],team:o.team,kind:'atk',out:'P'});});
     if(s){moves.push({a:[fx,fy],b:[F.x,F.y],team:F.team});L.push(`${nm(F)} ${F.lastDash?'scatta':'si muove'} di ${s} ${s===1?'casella':'caselle'} (−${F.lastCost} stamina${F.lastCost<s?(F.el==='V'?', passi leggeri del vento':F.el==='M'?', molle ai piedi':(F.fz==='dono'?', Vento che Attizza':'')):''}).`);}});
@@ -522,14 +522,101 @@ function runFight(cfg,seed,lvl){
   RND=Math.random;
   const a=up('A'),b=up('B');const res=a&&!b?'A':b&&!a?'B':'pari';
   return{G,ex,start,res};}
+/* ===================== MOVIMENTO SIMULTANEO CON COLLISIONI (regola di Nico, 2026-11-03) =====================
+   - Tutti si muovono insieme, una casella alla volta.
+   - Quando due avversari arrivano a contatto (caselle adiacenti) si fermano e ognuno sceglie, senza sapere cosa fa l'altro:
+     "prosegui" (concede un attacco di opportunità) oppure "resta" ingaggiato.
+     Entrambi proseguono: nessun attacco, entrambi pagano 1 stamina in più per schivarsi.
+     Uno prosegue e l'altro resta: chi resta fa l'attacco di opportunità a chi prosegue, poi entrambi completano il movimento.
+     Entrambi restano: si fermano lì, ingaggiati.
+   - Ogni attacco di opportunità (anche quello di chi si disimpegna) costa 1 stamina a chi lo fa; senza stamina non si fa.
+     Chi è fermo o ha già finito il movimento conta come "resta".
+   - Poi il movimento riprende per tutti; si ripete finché i movimenti non finiscono.
+   - Scavalcare una cassa costa 1 stamina in più (non ci si può fermare sopra; i muri non si scavalcano). */
+RULES.movSim=true;
+const freeVOf=F=>F.el==='V'?2:0;
+const occupata=(G,x,y,self)=>G.fs.some(f=>f!==self&&f.pf>0&&f.x===x&&f.y===y);
+// caselle raggiungibili: Map chiave -> {s: caselle, c: stamina, path: [[x,y],...]}
+function reach(G,F,maxSteps,stam){const fv=freeVOf(F),k0=key(F.x,F.y),res=new Map([[k0,{s:0,c:0,path:[]}]]);
+  if(F.trat>0||F.lega>0)return res;let layer=new Map([[k0,{c:0,path:[]}]]);
+  for(let s=1;s<=maxSteps;s++){const nl=new Map();
+    for(const[k,v]of layer){const[x,y]=k.split(',').map(Number);
+      for(const[dx,dy]of DIRS){const nx=x+dx,ny=y+dy,nk=key(nx,ny);if(nx<0||ny<0||nx>=W||ny>=H)continue;const o=G.obs.get(nk);if(o==='m'||occupata(G,nx,ny,F))continue;
+        const c=v.c+(s>fv?1:0)+(o?1:0);if(c>stam)continue;const old=nl.get(nk);if(!old||c<old.c)nl.set(nk,{c,path:[...v.path,[nx,ny]]});}}
+    for(const[k,v]of nl){if(G.obs.has(k))continue;const o=res.get(k);if(!o||v.c<o.c)res.set(k,{s,c:v.c,path:v.path});}
+    layer=nl;if(!nl.size)break;}
+  return res;}
+const passiMax=(G,F)=>enemies(G,F).some(o=>dist(F,o)<=1&&o.has('T6'))?1:4+freeVOf(F);
+function petPath(G,P){if(P.kind!=='automa'||P.trat>0)return[];const ox=P.x,oy=P.y,path=[];
+  const en=enemies(G,P);if(!en.length)return[];const pc=en.filter(o=>!o.isPet),pool=pc.length?pc:en,own=P.owner;
+  const T=pool.reduce((a,b)=>dist(P,a)+(own.pf>0?dist(own,a)*0.5:0)<=dist(P,b)+(own.pf>0?dist(own,b)*0.5:0)?a:b);
+  if(dist(P,T)>1)for(let i=0;i<3;i++){if(stepToward(G,P,T,1))path.push([P.x,P.y]);else break;}
+  P.x=ox;P.y=oy;return path;}
+// scelta dell'IA in una collisione
+function iaCollisione(G,F,contro){if(F.st<1)return 'resta';const r=F.P.ai;
+  if(r==='ranged'||r==='healer')return contro.some(o=>!o.isPet&&dist(F,o)<=1&&o.P&&o.P.ai!=='ranged'&&o.P.ai!=='healer')?'prosegui':'resta';
+  return contro.some(o=>!o.isPet)?'resta':'prosegui';}
+function attaccoOpportunita(G,o,F,L,arrows,perche){if(o.isPet||o.pf<=0||o.trat>0||o.prono>0||o.sbil||o.adoUsed||o.st<1)return;o.adoUsed=curN;o.st-=1;
+  const v=3+Math.max(o.mod.SAG,o.mod.DES,o.mod.FOR,o.mod.INT||0),x=Math.max(0,v-rdOf(F));hurt(F,x);o.stats.dmg+=x;o.stats.ado=(o.stats.ado||0)+1;
+  L.push(`${nm(o)} colpisce ${nm(F)} ${perche}: <b>attacco di opportunità</b>, ${x} danni (−1 stamina a ${o.name}).`);arrows.push({a:[o.x,o.y],b:[F.x,F.y],team:o.team,kind:'atk',out:'P'});}
+function* muoviTutti(G,n,man,L,arrows,moves){
+  const pk=(a,b)=>a.id<b.id?a.id+'|'+b.id:b.id+'|'+a.id,vivi=()=>G.fs.filter(f=>f.pf>0);
+  const start=new Map(vivi().map(F=>[F.id,[F.x,F.y]])),adj0=new Map(vivi().map(F=>[F.id,enemies(G,F).filter(o=>dist(F,o)<=1)]));
+  const M=[];
+  vivi().sort((a,b)=>b.mod.DES-a.mod.DES).forEach(F=>{F.lastCost=0;F.lastDash=false;
+    if(F.isPet){const p=petPath(G,F);if(p.length)M.push({F,path:p,i:0,steps:0,cost:0,casse:0,pet:true});return;}
+    if(F.trat>0){L.push(`${nm(F)} è Trattenuto e non si muove.`);return;}if(F.lega>0)return;
+    const dest=man(F)?man(F).move:moveAI(G,F,true);if(!dest)return;
+    const r=reach(G,F,passiMax(G,F),F.st).get(key(dest[0],dest[1]));
+    if(!r){L.push(`${nm(F)} non riesce più a raggiungere la casella scelta e resta fermo.`);return;}
+    if(r.s)M.push({F,path:r.path,i:0,steps:0,cost:0,casse:0});});
+  const gestite=new Set();vivi().forEach(a=>vivi().forEach(b=>{if(a.team!==b.team&&dist(a,b)<=1)gestite.add(pk(a,b));}));
+  const mov=F=>M.find(m=>m.F===F),inCorsa=m=>m&&!m.stop&&m.i<m.path.length&&m.F.pf>0;
+  for(let giro=0;giro<30&&M.some(inCorsa);giro++){
+    for(const k of [...gestite]){const[a,b]=k.split('|').map(id=>G.fs.find(f=>f.id===id));if(!a||!b||a.pf<=0||b.pf<=0||dist(a,b)>1)gestite.delete(k);}
+    const mossi=new Set();
+    for(const m of M.filter(inCorsa)){const F=m.F,[nx,ny]=m.path[m.i];
+      if(occupata(G,nx,ny,F)){const chi=G.fs.find(f=>f!==F&&f.pf>0&&f.x===nx&&f.y===ny);
+        if(inCorsa(mov(chi))&&!m.attesa){m.attesa=1;continue;}m.stop=true;L.push(`${nm(F)} trova la strada sbarrata e si ferma.`);continue;}
+      m.attesa=0;const cassa=G.obs.has(key(nx,ny)),c=m.pet?0:(m.steps+1>freeVOf(F)?1:0)+(cassa?1:0);
+      if(c>F.st){m.stop=true;continue;}F.st-=c;m.cost+=c;m.steps++;if(cassa)m.casse++;F.x=nx;F.y=ny;m.i++;mossi.add(F.id);}
+    // un movimento non può finire sopra una cassa: se si è fermato lì, torna indietro di una casella
+    // collisioni nuove tra avversari
+    const coll=[];vivi().forEach(a=>vivi().forEach(b=>{if(a.team<b.team&&dist(a,b)<=1&&(mossi.has(a.id)||mossi.has(b.id))&&!gestite.has(pk(a,b))){gestite.add(pk(a,b));coll.push([a,b]);}}));
+    if(!coll.length)continue;
+    const coinvolti=[...new Set(coll.flat())],dec={},chiedi=[];
+    coinvolti.forEach(F=>{const m=mov(F);if(F.isPet||!inCorsa(m)){dec[F.id]='resta';return;}
+      const contro=coll.filter(p=>p.includes(F)).map(p=>p[0]===F?p[1]:p[0]);
+      if(man(F))chiedi.push({id:F.id,nome:F.name,contro:contro.map(o=>o.id),x:F.x,y:F.y,stamina:F.st});else dec[F.id]=iaCollisione(G,F,contro);});
+    if(chiedi.length){const r=yield{tipo:'collisione',chi:chiedi};chiedi.forEach(c=>{const F=G.fs.find(f=>f.id===c.id);dec[c.id]=(r&&r[c.id])||iaCollisione(G,F,c.contro.map(id=>G.fs.find(f=>f.id===id)));});}
+    coinvolti.forEach(F=>{if(dec[F.id]==='prosegui'&&F.st<1)dec[F.id]='resta';});
+    const pagato=new Set();
+    coll.forEach(([a,b])=>{const da=dec[a.id],db=dec[b.id];
+      if(da==='prosegui'&&db==='prosegui'){[a,b].forEach(F=>{if(F.st>=1){F.st-=1;mov(F).cost+=1;}});L.push(`${nm(a)} e ${nm(b)} si incrociano e si scansano a vicenda (−1 stamina a testa).`);}
+      else if(da==='resta'&&db==='resta'){if(inCorsa(mov(a))||inCorsa(mov(b)))L.push(`${nm(a)} e ${nm(b)} si scontrano e restano <b>ingaggiati</b>.`);}
+      else{const P=da==='prosegui'?a:b,S=P===a?b:a;L.push(`${nm(P)} incontra ${nm(S)} e tira dritto.`);attaccoOpportunita(G,S,P,L,arrows,'mentre gli passa accanto');}});
+    coll.forEach(([a,b])=>{if(dec[a.id]==='resta'&&dec[b.id]==='resta')[a,b].forEach(F=>{const m=mov(F);if(m)m.stop=true;});});
+  }
+  // chi si è fermato sopra una cassa scende sull'ultima casella libera del percorso
+  M.forEach(m=>{const F=m.F;if(F.pf>0&&G.obs.has(key(F.x,F.y))){const back=[start.get(F.id),...m.path.slice(0,m.i-1)].reverse().find(([x,y])=>!G.obs.has(key(x,y))&&!occupata(G,x,y,F));if(back){F.x=back[0];F.y=back[1];}}});
+  M.forEach(m=>{const F=m.F,s=start.get(F.id);if(F.x===s[0]&&F.y===s[1])return;moves.push({a:s,b:[F.x,F.y],team:F.team});
+    if(m.pet){L.push(`${nm(F)} avanza di ${m.steps}.`);return;}
+    F.stats.moved+=m.steps;F.movedNow=m.steps;F.lastCost=m.cost;
+    L.push(`${nm(F)} si muove di ${m.steps} ${m.steps===1?'casella':'caselle'} (−${m.cost} stamina${m.casse?`, scavalca ${m.casse===1?'una cassa':m.casse+' casse'}`:''}${F.el==='V'&&m.steps?', passi leggeri del vento':''}).`);
+    if(RULES.ado&&!(RULES.v4ado&&F.has('V4')))(adj0.get(F.id)||[]).filter(o=>o.pf>0&&dist(F,o)>1).forEach(o=>attaccoOpportunita(G,o,F,L,arrows,'che si disimpegna senza Schivata né Aggiramento'));});
+}
+function exchange(G,n,manual){const g=exchangeGen(G,n,manual);let r=g.next();while(!r.done)r=g.next(null);return r.value;}
+
 
 /* ===================== API PER L'APP: partita manuale =====================
    const G = nuovaPartita({map:'casse', A:[{fz:'dono',bi:0,L:5,scheda?}, {fz:'ingegno',bi:3,L:5}], B:[...]});
    piani[F.id] = {move:[x,y]|null, ci:indice in F.hand|null, t:id bersaglio|null}  oppure {ai:true}
    (automi e torrette, F.isPet, giocano sempre da soli: non servono piani)
    const ris = risolviScambio(G, piani);  -> {lines, cards, moves, arrows, pos, end};  G.over = null|'A'|'B'|'pari'
+   Con il movimento simultaneo, se un personaggio comandato a mano entra in collisione, risolviScambio restituisce
+   {attesa:{tipo:'collisione', chi:[{id,nome,contro:[id],x,y,stamina}]}}: si risponde con
+   continuaScambio(G, {id:'prosegui'|'resta', ...}), che restituisce di nuovo un'attesa oppure il risultato finale.
 */
-const freeVOf=F=>F.el==='V'?2:0;
 function stPlan(G,F){return G.n>0&&!F.noRec?Math.min(F.stMax,F.st+RULES.stRec):F.st;}
 function reachFor(G,F,st){if(F.trat>0||F.lega>0)return new Map([[key(F.x,F.y),0]]);const fv=freeVOf(F);let b=Math.min(4+fv,Math.max(0,st)+fv);
   if(enemies(G,F).some(o=>dist(F,o)<=1&&o.has('T6')))b=Math.min(b,1);return bfs(G,F,b);}
@@ -546,8 +633,11 @@ function nuovaPartita(cfg){RND=Math.random;curN=1;const G={obs:new Map(MAPS[cfg.
   G.fs.forEach(F=>{if(cnt[F.name]>1){seen[F.name]=(seen[F.name]||0)+1;F.name+=' '+seen[F.name];}});
   spawnAutomi(G);return G;}
 const personaggio=(G,id)=>G.fs.find(f=>f.id===id);
-function caselleRaggiungibili(G,F){const sp=stPlan(G,F),R=reachFor(G,F,sp),out=new Map();for(const[k,s]of R){if(Math.max(0,s-freeVOf(F))<=sp)out.set(k,s);}return out;}
-function costoMovimento(G,F,move){if(!move)return 0;const s=reachFor(G,F,stPlan(G,F)).get(key(...move));return s==null?0:Math.max(0,s-freeVOf(F));}
+function caselleRaggiungibili(G,F){const sp=stPlan(G,F);if(!RULES.movSim){const R=reachFor(G,F,sp),out=new Map();for(const[k,s]of R){if(Math.max(0,s-freeVOf(F))<=sp)out.set(k,s);}return out;}
+  const out=new Map();for(const[k,r]of reach(G,F,passiMax(G,F),sp))out.set(k,r.c);return out;}
+function costoMovimento(G,F,move){if(!move)return 0;if(!RULES.movSim){const s=reachFor(G,F,stPlan(G,F)).get(key(...move));return s==null?0:Math.max(0,s-freeVOf(F));}
+  const r=reach(G,F,passiMax(G,F),stPlan(G,F)).get(key(...move));return r?r.c:0;}
+function percorso(G,F,move){if(!move)return[];const r=reach(G,F,passiMax(G,F),stPlan(G,F)).get(key(...move));return r?r.path:[];}
 function allaPosizione(F,move,fn){const ox=F.x,oy=F.y;if(move){F.x=move[0];F.y=move[1];}try{return fn();}finally{F.x=ox;F.y=oy;}}
 function bersagliCarta(G,F,d,move){const e=fxOf(d.c);
   return allaPosizione(F,move,()=>{if(e.cat==='atk')return{kind:'atk',list:targetsFor(G,F,e)};
@@ -558,7 +648,9 @@ function motivoCartaNonGiocabile(G,F,d,move){const k=costOf(d,F),avail=stPlan(G,
   if(d.c.lv&&!tecReady(F,d))return F.fz==='dono'?'la catena di sigilli non è pronta':'i pezzi sul banco non bastano';
   if(!proOk(F,d,G.n+1))return 'protesi surriscaldata o danneggiata';
   if(/Sparo/.test(d.c.a||'')&&F.ammo<shotNeed(fxOf(d.c)))return 'tamburo vuoto: serve una carta con Ricarica';return '';}
-function risolviScambio(G,piani){G.n++;RND=Math.random;const ris=exchange(G,G.n,piani);
+function risolviScambio(G,piani){G.n++;RND=Math.random;G.gen=exchangeGen(G,G.n,piani);return avanzaScambio(G,G.gen.next());}
+function continuaScambio(G,risposte){if(!G.gen)throw new Error('Nessuno scambio in corso');return avanzaScambio(G,G.gen.next(risposte||{}));}
+function avanzaScambio(G,r){if(!r.done)return{attesa:r.value};G.gen=null;const ris=r.value;
   const up=t=>G.fs.some(F=>F.team===t&&F.pf>0&&!F.isPet),a=up('A'),b=up('B');if(!a||!b)G.over=a?'A':b?'B':'pari';else if(G.n>=60)G.over='pari';return ris;}
 const istantanea=snap;
 const testoSemplice=h=>String(h).replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&amp;/g,'&');

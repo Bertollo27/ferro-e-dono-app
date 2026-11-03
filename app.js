@@ -6,7 +6,7 @@
    ============================================================ */
 (()=>{
 'use strict';
-const VERSIONE='0.1 · fase 1';
+const VERSIONE='0.2 · fase 1';
 const $app=document.getElementById('app');
 const E=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -31,6 +31,7 @@ const S={
   attivoC:0,         // personaggio mostrato nella crescita
   G:null, piani:{}, ia:{}, attivo:null, ultimo:null, foglio:null, errore:'', registroSalvato:false,
 };
+if(S.cfg.mov==null)S.cfg.mov='insieme';
 S.cfg.A=(S.cfg.A||[]).filter(baseDa);S.cfg.B=(S.cfg.B||[]).filter(baseDa);
 while(S.cfg.A.length<4)S.cfg.A.push(chiaveBase(casuale(BASI)));while(S.cfg.B.length<4)S.cfg.B.push(chiaveBase(casuale(BASI)));
 const salvaCfg=()=>mem.set('fd-cfg',S.cfg);
@@ -88,6 +89,9 @@ function vPrep(){
     <h3>Livello dei personaggi (uguale per tutti)</h3>
     <div class="riga"><div class="passo"><button data-act="liv" data-d="-1" aria-label="Livello meno">−</button><span class="num">${c.L}</span><button data-act="liv" data-d="1" aria-label="Livello più">+</button></div>
       <span class="piccolo tenue">da 1 a 20</span></div>
+    <h3>Movimento (regola in prova)</h3>
+    <div class="segmenti" role="group" aria-label="Regola di movimento"><button data-act="movimento" data-m="insieme" aria-pressed="${c.mov==='insieme'}">Tutti insieme</button><button data-act="movimento" data-m="turni" aria-pressed="${c.mov==='turni'}">Uno alla volta</button></div>
+    <p class="piccolo tenue">${c.mov==='insieme'?'Ci si muove tutti insieme: chi si incontra sceglie se proseguire o restare ingaggiato. Scavalcare una cassa costa 1 stamina.':'Regola precedente: ci si muove uno dopo l\'altro, prima chi ha più Destrezza; le casse non si scavalcano.'}</p>
     <h3>Mappa</h3>
     <select data-act="mappa" aria-label="Mappa">${MAPPE.map(m=>`<option value="${m.id}"${m.id===c.map?' selected':''}>${E(m.nome)}</option>`).join('')}</select>
   </div>
@@ -193,11 +197,12 @@ function vGriglia(opt={}){
   let tgtIds=new Set(),cura=false;
   if(opt.raggiungibili)for(const k of opt.raggiungibili.keys()){const[x,y]=k.split(',').map(Number);parts.push(`<rect class="g-raggiungibile" x="${x*C+2}" y="${y*C+2}" width="${C-4}" height="${C-4}" rx="4" pointer-events="none"/>`);}
   if(opt.bersagli){opt.bersagli.list.forEach(o=>tgtIds.add(o.id));cura=opt.bersagli.kind==='heal';}
+  if(p&&p.move&&RULES.movSim){const pts=[[F.x,F.y],...percorso(G,F,p.move)];if(pts.length>1)parts.push(`<polyline class="g-freccia" points="${pts.map(([x,y])=>`${x*C+C/2},${y*C+C/2}`).join(' ')}" stroke="var(--ottone)" stroke-dasharray="2 4" pointer-events="none"/>`);}
   if(p&&p.move)parts.push(`<rect class="g-meta" x="${p.move[0]*C+2}" y="${p.move[1]*C+2}" width="${C-4}" height="${C-4}" rx="5" pointer-events="none"/>`);
   // frecce dell'ultimo scambio
   if(opt.frecce){(opt.mosse||[]).forEach(m=>parts.push(freccia(m.a,m.b,colSq(m.team),C,'4 4')));opt.frecce.forEach(a=>parts.push(freccia(a.a,a.b,a.kind==='heal'||a.kind==='repair'?'var(--vinta)':colSq(a.team),C,'')));}
   G.fs.filter(o=>o.pf>0).forEach(o=>{const cx=o.x*C+C/2,cy=o.y*C+C/2,r=o.isPet?11:14,fr=o.pf/o.pfMax;
-    const sel=F&&o.id===F.id,tg=tgtIds.has(o.id),tsel=tg&&p&&p.t===o.id;
+    const sel=(F&&o.id===F.id)||(opt.collisione&&opt.collisione.some(c=>c.id===o.id)),tg=tgtIds.has(o.id),tsel=tg&&p&&p.t===o.id;
     parts.push(`<g class="g-pedina toccabile" data-act="pedina" data-id="${o.id}" role="button" aria-label="${E(o.name)}">
       ${sel?`<circle class="g-scelto" cx="${cx}" cy="${cy}" r="${r+3}"/>`:''}
       ${tg?`<circle class="g-bersaglio${cura?' cura':''}${tsel?' scelto':''}" cx="${cx}" cy="${cy}" r="${r+4}"/>`:''}
@@ -267,7 +272,7 @@ function vScontro(){
     <div class="squadra-chips">${chips}</div>
     ${F?`<div class="riquadro pila" style="gap:8px">${pannello}
       <label class="riga piccolo"><input type="checkbox" data-act="ia" ${ia?'checked':''}> Lascia decidere all'IA per ${E(F.name)}</label></div>`:''}
-    <p class="piccolo tenue">Tocca una pedina per vedere com'è messa. Le frecce tratteggiate erano i movimenti dello scambio scorso.</p>
+    <p class="piccolo tenue">Tocca una pedina per vedere com'è messa. La linea tratteggiata è il percorso che farai.</p>
   </div>${barra(btn('risolvi',nonDecisi.length?`Risolvi (${nonDecisi.map(o=>E(o.name)).join(', ')}: decide l'IA)`:'Risolvi lo Scambio','primario'))}`;
 }
 
@@ -281,6 +286,13 @@ function vFoglio(){
       ${vGriglia({frecce:r.arrows,mosse:r.moves})}
       <h3>Cosa è successo</h3><ol class="registro">${r.lines.map(l=>`<li>${l}</li>`).join('')}</ol>
       ${btn('chiudi-foglio',S.G.over?'Vedi il risultato':'Prossimo Scambio','primario grande')}`;}
+  else if(f.tipo==='collisione'){const G=S.G;
+    html=`<h2>Collisione!</h2><p class="piccolo">Durante il movimento ${f.chi.length>1?'questi personaggi hanno':'il tuo personaggio ha'} incontrato un avversario. Nessuno sa cosa sceglie l'altro.</p>
+      <ul class="registro piccolo"><li><b>Prosegui</b>: se l'altro resta, ti fa un attacco di opportunità; se prosegue anche lui, vi scansate pagando 1 stamina a testa.</li><li><b>Resta</b>: se l'altro prosegue gli fai un attacco di opportunità (costa 1 stamina) e poi completate il movimento; se resta anche lui, vi fermate qui ingaggiati.</li></ul>
+      ${vGriglia({collisione:f.chi})}
+      ${f.chi.map(c=>`<div class="riquadro pila" style="gap:8px"><div><b class="tA">${E(c.nome)}</b> incontra ${c.contro.map(id=>{const o=personaggio(G,id);return `<b class="t${o.team}">${E(o.name)}</b>`;}).join(' e ')} <span class="piccolo tenue">· stamina ${c.stamina}</span></div>
+        <div class="segmenti" role="group"><button data-act="scelta-coll" data-id="${c.id}" data-v="prosegui" aria-pressed="${f.scelte[c.id]==='prosegui'}" ${c.stamina<1?'disabled':''}>Prosegui</button><button data-act="scelta-coll" data-id="${c.id}" data-v="resta" aria-pressed="${f.scelte[c.id]==='resta'}">Resta</button></div></div>`).join('')}
+      ${btn('continua-coll',f.chi.every(c=>f.scelte[c.id])?'Continua il movimento':'Scegli per tutti','primario grande',f.chi.every(c=>f.scelte[c.id])?'':'disabled')}`;}
   else if(f.tipo==='info'){const o=S.G.fs.find(x=>x.id===f.id);
     html=`${infoPg(o,true)}${o.isPet?'':`<p class="piccolo tenue">${o.team==='A'?'Tuo personaggio':'Avversario'} · ${E(o.R.nome)} · ${E(o.P.short)} · livello ${o.L}</p>`}${btn('chiudi-foglio','Chiudi','grande')}`;}
   else if(f.tipo==='menu'){html=`<h2>Menu</h2>${btn('tutti-ia','Fai giocare l\'IA per tutta la mia squadra','grande')}${btn('arrenditi','Abbandona la partita','grande')}<a class="btn grande" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="guida.html" target="_blank" rel="noopener">Apri la guida</a>${btn('chiudi-foglio','Torna allo scontro','primario grande')}`;}
@@ -302,7 +314,7 @@ function vFine(){
 }
 function salvaRegistro(){
   if(S.registroSalvato)return;S.registroSalvato=true;const G=S.G;
-  const voce={data:new Date().toISOString(),versione:VERSIONE,formato:S.cfg.n+'v'+S.cfg.n,livello:S.cfg.L,mappa:G.map,esito:G.over,scambi:G.n,
+  const voce={data:new Date().toISOString(),versione:VERSIONE,formato:S.cfg.n+'v'+S.cfg.n,movimento:S.cfg.mov,livello:S.cfg.L,mappa:G.map,esito:G.over,scambi:G.n,
     squadre:G.fs.filter(F=>!F.isPet).map(F=>({squadra:F.team,fazione:F.fz,base:F.R.BUILDS[F.bi].name,nodi:F.taken.map(t=>t.id),pf:Math.max(0,F.pf),pfMax:F.pfMax,danni:F.stats.dmg,cure:F.stats.heal,ia:F.team==='B'||!!S.ia[F.id]}))};
   const r=mem.get('fd-registro',[]);r.unshift(voce);mem.set('fd-registro',r.slice(0,300));
 }
@@ -327,6 +339,7 @@ function avviaPartita(){
   const n=S.cfg.n,L=S.cfg.L;
   const A=Array.from({length:n},(_,i)=>{const b=baseDa(S.cfg.A[i]);return{fz:b.fz,bi:b.bi,L,scheda:JSON.parse(JSON.stringify(S.cresc[i].s))};});
   const B=Array.from({length:n},(_,i)=>{const b=baseDa(S.cfg.B[i]);return{fz:b.fz,bi:b.bi,L};});
+  RULES.movSim=S.cfg.mov!=='turni';
   S.G=nuovaPartita({map:S.cfg.map,A,B});S.piani={};S.ia={};S.attivo=null;S.ultimo=null;S.foglio=null;S.registroSalvato=false;S.schermo='scontro';
 }
 function risolvi(){
@@ -334,9 +347,11 @@ function risolvi(){
   G.fs.forEach(F=>{if(F.isPet||F.pf<=0)return;
     if(F.team==='B'||S.ia[F.id]){piani[F.id]={ai:true};return;}
     const p=S.piani[F.id];piani[F.id]=p&&p.ci!=null?{move:p.move,ci:p.ci,t:p.t}:{ai:true};});
-  const ris=risolviScambio(G,piani);
-  S.piani={};S.ultimo=ris;S.foglio={tipo:'scambio',ris};
-  if(G.over)salvaRegistro();
+  S.piani={};dopoPasso(risolviScambio(G,piani));
+}
+function dopoPasso(r){
+  if(r.attesa){S.foglio={tipo:'collisione',chi:r.attesa.chi,scelte:{}};return;}
+  S.ultimo=r;S.foglio={tipo:'scambio',ris:r};if(S.G.over)salvaRegistro();
 }
 function rivalidaCarta(F){const p=piano(F.id);if(p.ci==null)return;const d=F.hand[p.ci];
   if(!d||motivoCartaNonGiocabile(S.G,F,d,p.move)){p.ci=null;p.t=null;return;}
@@ -353,6 +368,7 @@ const AZ={
   'vai-prep':()=>{S.schermo='prep';S.foglio=null;},
   'vai-registro':()=>{S.errore='';S.schermo='registro';},
   formato:el=>{S.cfg.n=+el.dataset.n;salvaCfg();},
+  movimento:el=>{S.cfg.mov=el.dataset.m;salvaCfg();},
   liv:el=>{S.cfg.L=Math.max(1,Math.min(20,S.cfg.L+(+el.dataset.d)));salvaCfg();},
   casuale:el=>{const l=el.dataset.lato;for(let i=0;i<4;i++)S.cfg[l][i]=chiaveBase(casuale(BASI));salvaCfg();},
   'vai-cresc':()=>{S.schermo='cresc';S.attivoC=0;S.errore='';},
@@ -386,12 +402,14 @@ const AZ={
     S.foglio={tipo:'info',id};},
   ia:el=>{const F=personaggio(S.G,S.attivo);if(!F)return;S.ia[F.id]=!S.ia[F.id];},
   risolvi:()=>risolvi(),
+  'scelta-coll':el=>{S.foglio.scelte[el.dataset.id]=el.dataset.v;},
+  'continua-coll':()=>{dopoPasso(continuaScambio(S.G,S.foglio.scelte));},
   rivedi:()=>{S.foglio={tipo:'scambio',ris:S.ultimo};},
   'menu-scontro':()=>{S.foglio={tipo:'menu'};},
   'tutti-ia':()=>{miei().forEach(F=>S.ia[F.id]=true);S.foglio=null;},
   arrenditi:()=>{S.G.over='B';salvaRegistro();S.foglio=null;S.schermo='fine';},
   'chiudi-foglio':()=>{const f=S.foglio;S.foglio=null;if(f&&f.tipo==='scambio'&&S.G&&S.G.over)S.schermo='fine';},
-  'sfondo-foglio':(el,ev)=>{if(ev.target===el&&!(S.foglio&&S.foglio.tipo==='scambio'&&S.G.over))S.foglio=null;else return false;},
+  'sfondo-foglio':(el,ev)=>{if(ev.target===el&&S.foglio&&S.foglio.tipo!=='collisione'&&!(S.foglio.tipo==='scambio'&&S.G.over))S.foglio=null;else return false;},
   rivincita:()=>avviaPartita(),
   esporta:()=>scaricaFile('ferro-e-dono-partite.json',JSON.stringify(mem.get('fd-registro',[]),null,1)),
   copia:()=>{const t=JSON.stringify(mem.get('fd-registro',[]));
@@ -410,7 +428,7 @@ $app.addEventListener('change',ev=>{
   else if(el.dataset.act==='mappa'){S.cfg.map=el.value;salvaCfg();}
   else if(el.dataset.act==='ia'){AZ.ia();render();}
 });
-document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&S.foglio&&!(S.foglio.tipo==='scambio'&&S.G&&S.G.over)){S.foglio=null;render();}});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&S.foglio&&S.foglio.tipo!=='collisione'&&!(S.foglio.tipo==='scambio'&&S.G&&S.G.over)){S.foglio=null;render();}});
 window.addEventListener('beforeunload',ev=>{if(S.schermo==='scontro'&&S.G&&!S.G.over){ev.preventDefault();ev.returnValue='';}});
 
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});

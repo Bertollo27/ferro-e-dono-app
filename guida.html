@@ -118,7 +118,7 @@ html,body{margin:0}
   <ol class="flow">
     <li><b>Scegli</b>Per ogni personaggio: dove muoverlo, quale carta giocare e su chi.</li>
     <li><b>Rivela</b>Tutte le carte si scoprono nello stesso momento.</li>
-    <li><b>Movimento</b>Ci si sposta, prima chi ha più Destrezza.</li>
+    <li><b>Movimento</b>Tutti si muovono insieme, una casella alla volta. Chi incontra un nemico si ferma e sceglie (vedi sotto).</li>
     <li><b>Azioni</b>Agisce prima la carta con più <b>Velocità</b>. A parità di Velocità si agisce insieme.</li>
     <li><b>Fine</b>Effetti come Brucia, poi si pesca 1 carta e si recuperano 2 di stamina.</li>
   </ol>
@@ -126,7 +126,19 @@ html,body{margin:0}
 </section>
 
 <section>
-  <h2><span class="n">2</span>La carta</h2>
+  <h2><span class="n">2</span>Quando due avversari si incontrano</h2>
+  <p>Durante il movimento, appena due avversari arrivano uno accanto all'altro si fermano. Ognuno sceglie in segreto, senza sapere dove voleva andare l'altro:</p>
+  <div class="scroll"><table>
+    <thead><tr><th class="row">Tu ↓ / L'altro →</th><th>Prosegue</th><th>Resta</th></tr></thead>
+    <tbody>
+      <tr><th class="row">Prosegui</th><td>Vi scansate: <b>−1 stamina</b> a testa, nessun attacco</td><td>Ti fa un <b>attacco di opportunità</b>, poi tutti e due completate il movimento</td></tr>
+      <tr><th class="row">Resta</th><td>Gli fai un <b>attacco di opportunità</b>, poi tutti e due completate il movimento</td><td>Vi fermate lì: siete <b>ingaggiati</b></td></tr>
+    </tbody></table></div>
+  <p class="muted">Chi è fermo, o ha già finito il suo movimento, conta come “Resta”. Dopo le scelte il movimento riprende per tutti, e si ripete finché ogni movimento è finito. Questa regola è in prova: nell'app si può tornare a quella vecchia (“Uno alla volta”).</p>
+</section>
+
+<section>
+  <h2><span class="n">3</span>La carta</h2>
   <div class="cardrow">
     <div class="card" aria-label="Esempio di carta">
       <div class="hd"><span class="nm"><span class="tag">A</span>Taglio Infuocato</span><span class="v"><span class="tag">B</span>Vel 7 · 2 st</span></div>
@@ -139,13 +151,13 @@ html,body{margin:0}
       <li><span class="tag">B</span><span>La <b>Velocità</b> decide chi agisce prima. Il <b>costo</b> si paga in stamina.</span></li>
       <li><span class="tag">C</span><span>La <b>metà alta</b> è l'attacco: tipo e danno (un numero più una caratteristica, qui Saggezza).</span></li>
       <li><span class="tag">D</span><span>La <b>metà bassa</b> è la difesa che usi se vieni attaccato.</span></li>
-      <li><span class="tag">E</span><span>Il <b>sigillo</b> si aggiunge alla tua catena e serve per le tecniche (vedi 5).</span></li>
+      <li><span class="tag">E</span><span>Il <b>sigillo</b> si aggiunge alla tua catena e serve per le tecniche (vedi 6).</span></li>
     </ul>
   </div>
 </section>
 
 <section>
-  <h2><span class="n">3</span>Attacco contro difesa</h2>
+  <h2><span class="n">4</span>Attacco contro difesa</h2>
   <div class="tri">
     <div class="wheel">
       <svg viewBox="0 0 240 210" role="img" aria-label="Sasso batte forbici, forbici batte carta, carta batte sasso">
@@ -180,7 +192,7 @@ html,body{margin:0}
 </section>
 
 <section>
-  <h2><span class="n">4</span>Un esempio</h2>
+  <h2><span class="n">5</span>Un esempio</h2>
   <div class="ex">
     <div class="duo">
       <div class="who"><b class="tA">A · Drago (Fuoco)</b>gioca Taglio Infuocato<br><span class="res">Vel 7 · ✊ Colpo · difesa ✌️</span></div>
@@ -196,9 +208,9 @@ html,body{margin:0}
 </section>
 
 <section>
-  <h2><span class="n">5</span>Stamina, mazzo e tecniche</h2>
+  <h2><span class="n">6</span>Stamina, mazzo e tecniche</h2>
   <div class="grid2">
-    <div class="tile"><b>Stamina</b>Muoversi costa 1 per casella, fino a 4 caselle (il Vento ne ha 2 gratis). Le carte costano da 0 a 3. Recuperi 2 per Scambio. Se non puoi pagare nessuna carta sei <b>Esausto</b> e ti limiti a difenderti.</div>
+    <div class="tile"><b>Stamina</b>Muoversi costa 1 per casella, fino a 4 caselle (il Vento ne ha 2 gratis). Scavalcare una cassa costa 1 in più (non ci si ferma sopra); i muri non si scavalcano. Le carte costano da 0 a 3. Recuperi 2 per Scambio. Se non puoi pagare nessuna carta sei <b>Esausto</b> e ti limiti a difenderti.</div>
     <div class="tile"><b>Mano e mazzo</b>Hai 5 carte in mano e ne peschi 1 alla fine di ogni Scambio. Quando il mazzo finisce rimescoli gli scarti, ma perdi 2 di stamina. Il mazzo va da 10 a 24 carte.</div>
     <div class="tile"><b>Catena di sigilli</b>Ogni carta che giochi aggiunge il suo sigillo alla catena, che tiene gli ultimi 3. Il Jolly vale come qualsiasi sigillo. Per l'Ingegno i sigilli si chiamano <b>pezzi</b> e la catena è il <b>banco</b>.</div>
     <div class="tile"><b>Tecniche</b>Una tecnica <b>Base</b> chiede 1 sigillo qualsiasi, una <b>Avanzata</b> i 2 sigilli indicati, una <b>Suprema</b> la sequenza di 3 più 3 di Flusso. Chi ha un solo elemento lancia la Suprema con 3 sigilli qualsiasi.</div>
@@ -207,14 +219,14 @@ html,body{margin:0}
 </section>
 
 <section>
-  <h2><span class="n">6</span>Vantaggi in combattimento</h2>
+  <h2><span class="n">7</span>Vantaggi in combattimento</h2>
   <div class="grid2">
     <div class="tile"><b>Spiraglio</b>Ottieni lo Spiraglio quando la tua difesa è Vinta e tu e l'attaccante avete Velocità diverse. Nel tuo prossimo attacco contro di lui, la sua difesa peggiora di un grado. Scade alla fine dello Scambio successivo.</div>
     <div class="tile"><b>Impeto</b>Se il tuo attacco vince il triangolo (difesa Persa), lo Scambio dopo hai +2 Velocità.</div>
     <div class="tile"><b>Interruzione</b>Se colpisci prima un nemico più lento di almeno 2: con difesa Persa perde il suo attacco, con difesa Retta attacca a metà forza.</div>
     <div class="tile"><b>Contrattacco</b>Un Contrattacco Vinto in mischia restituisce subito il colpo con il valore scritto sulla carta.</div>
     <div class="tile"><b>Guardia rotta</b>Una Rottura che batte una Parata rende il difensore <b>Sbilanciato</b>: nello Scambio dopo difendersi gli costa 3 di stamina.</div>
-    <div class="tile"><b>Attacco di opportunità</b>Se ti allontani da un nemico che hai accanto camminando, senza Schivata né Aggiramento, lui ti colpisce gratis.</div>
+    <div class="tile"><b>Attacco di opportunità</b>Se ti allontani da un nemico che hai accanto camminando, senza Schivata né Aggiramento, lui ti colpisce: 3 + la sua caratteristica migliore, senza triangolo. Ogni attacco di opportunità costa 1 stamina a chi lo fa, e se ne fa al massimo uno per Scambio.</div>
   </div>
   <div class="chips" aria-label="Stati">
     <span class="chip"><i style="color:var(--F)">Brucia</i> danni per 3 Scambi, spento dalle cure d'Acqua</span>
@@ -228,7 +240,7 @@ html,body{margin:0}
 </section>
 
 <section>
-  <h2><span class="n">7</span>Prima della partita: far crescere il personaggio</h2>
+  <h2><span class="n">8</span>Prima della partita: far crescere il personaggio</h2>
   <div class="web">
     <svg viewBox="0 0 200 200" role="img" aria-label="La Ragnatela: centro, quattro elementi sull'anello, incroci tra elementi vicini">
       <circle cx="100" cy="100" r="86" style="fill:none;stroke:var(--line);stroke-dasharray:3 4"/>
@@ -252,7 +264,7 @@ html,body{margin:0}
 </section>
 
 <section class="ing">
-  <h2><span class="n">8</span>L'Ingegno: macchine, polvere e alchimia</h2>
+  <h2><span class="n">9</span>L'Ingegno: macchine, polvere e alchimia</h2>
   <p>I personaggi dell'Ingegno usano le stesse regole del Dono (Scambio, triangolo, stamina, tecniche) e possono stare nella stessa squadra. Al posto degli elementi hanno quattro <b>mestieri</b>: Armi, Meccanica, Alchimia e Bionico. Gli incroci tra mestieri vicini sono Tattica, Esplosivi, Medicina e Protesi.</p>
   <div class="scroll"><table>
     <thead><tr><th class="row">Attacco ↓ / Difesa →</th><th>✊ Schivata</th><th>✋ Parata</th><th>✌️ Contrattacco</th></tr></thead>
@@ -269,13 +281,13 @@ html,body{margin:0}
 </section>
 
 <section>
-  <h2><span class="n">9</span>Come si usa l'app</h2>
+  <h2><span class="n">10</span>Come si usa l'app</h2>
   <ol class="flow">
     <li><b>Prepara</b>Scegli formato (da 1 contro 1 a 4 contro 4), livello e mappa, poi i personaggi tuoi e dell'IA.</li>
     <li><b>Fai crescere</b>Per ogni personaggio scegli “Percorso consigliato” oppure “Scelgo io” e prendi un nodo per livello. “Torna indietro” annulla l'ultimo nodo.</li>
-    <li><b>Muovi</b>Tocca la pedina del personaggio (o il suo nome sotto la griglia), poi una casella verde. Toccare di nuovo la pedina annulla il movimento.</li>
+    <li><b>Muovi</b>Tocca la pedina del personaggio (o il suo nome sotto la griglia), poi una casella verde: la linea tratteggiata mostra il percorso. Toccare di nuovo la pedina annulla il movimento.</li>
     <li><b>Gioca</b>Tocca una carta della mano e, se serve, il bersaglio (sulla griglia o nei pulsanti). Le carte sbiadite dicono perché non si possono giocare.</li>
-    <li><b>Risolvi</b>Quando sei pronto premi “Risolvi lo Scambio”. Chi non ha una carta scelta lo muove l'IA.</li>
+    <li><b>Risolvi</b>Quando sei pronto premi “Risolvi lo Scambio”. Chi non ha una carta scelta lo muove l'IA. Se durante il movimento c'è una collisione, l'app si ferma e ti chiede “Prosegui” o “Resta”.</li>
   </ol>
 </section>
 
