@@ -9,13 +9,13 @@ const B=api.basi();if(B.length!==16)fail('basi '+B.length);
 const pick=(n,k)=>Array.from({length:n},(_,i)=>B[(i*5+k)%16]);let w={A:0,B:0,pari:0};
 for(const n of [1,2,3,4])for(const L of [1,5,12,20])for(let s=1;s<=6;s++){const A=pick(n,s),Bt=pick(n,s+7);const r=api.runFight({A,B:Bt,map:['aperta','casse','vicolo'][s%3]},s,L);w[r.res]++;}
 // 2) partita manuale mista: A gioca a mano, B è IA
-let coll=0;const log=[];
+let coll=0,rip=0;const log=[];
 const G=api.nuovaPartita({map:'casse',A:[{fz:'dono',bi:0,L:6},{fz:'ingegno',bi:3,L:6}],B:[{fz:'ingegno',bi:0,L:6},{fz:'dono',bi:4,L:6}]});
 while(!G.over){const p={};for(const F of G.fs){if(F.pf<=0||F.isPet)continue;if(F.team==='B'){p[F.id]={ai:true};continue;}
   const R=[...api.caselleRaggiungibili(G,F).keys()];const mv=R[R.length-1].split(',').map(Number);
   const ci=F.hand.findIndex(d=>!api.motivoCartaNonGiocabile(G,F,d,mv));let t=null;
   if(ci>=0){const bt=api.bersagliCarta(G,F,F.hand[ci],mv);t=bt.list&&bt.list[0]?bt.list[0].id:null;}p[F.id]={move:mv,ci:ci>=0?ci:null,t};}
-  let r=api.risolviScambio(G,p);while(r.attesa){coll++;const ans={};r.attesa.chi.forEach(c=>ans[c.id]=Math.random()<.5?'prosegui':'resta');r=api.continuaScambio(G,ans);}
+  let r=api.risolviScambio(G,p);while(r.attesa){coll++;const ans={};if(r.attesa.tipo==='riposiziona'){rip++;coll--;r.attesa.chi.forEach(c=>{if(Math.random()<.7)ans[c.id]=c.caselle[Math.floor(Math.random()*c.caselle.length)];});}else r.attesa.chi.forEach(c=>ans[c.id]=Math.random()<.5?'prosegui':'resta');r=api.continuaScambio(G,ans);}
   if(!r.lines.length)fail('scambio vuoto');log.push(...r.lines);}
 if(!api.istantanea(G).some(f=>f.pet))fail('l\'automa dell\'Ingegnere non è comparso');
 // 3) crescita manuale casuale fino al 20 per tutte le 16 basi, poi 4v4 misti con quelle schede
@@ -30,6 +30,6 @@ for(const b of B){const s=api.nuovaScheda(b.fz,b.bi);
 for(let k=0;k<6;k++){const G2=api.nuovaPartita({map:'vicolo',A:[0,1,2,3].map(i=>schede[(i*3+k)%16]),B:[4,5,6,7].map(i=>schede[(i*3+k)%16])});
   while(!G2.over){const p={};G2.fs.forEach(F=>p[F.id]={ai:true});api.risolviScambio(G2,p);}}
 if(api.schedaConsigliata('ingegno',3,12).level!==12)fail('schedaConsigliata');
-console.log(`collisioni chieste: ${coll}, casse scavalcate: ${log.filter(l=>/scavalca/.test(l)).length}, si scansano: ${log.filter(l=>/si scansano/.test(l)).length}, ingaggiati: ${log.filter(l=>/ingaggiati/.test(l)).length}`);
+console.log(`scelte di spostamento: ${rip}, collisioni chieste: ${coll}, casse scavalcate: ${log.filter(l=>/scavalca/.test(l)).length}, si scansano: ${log.filter(l=>/si scansano/.test(l)).length}, ingaggiati: ${log.filter(l=>/ingaggiati/.test(l)).length}`);
 console.log(`96 scontri automatici (misti) ok: A ${w.A}, B ${w.B}, pari ${w.pari} · partita manuale mista finita in ${G.n} scambi · 16 crescite manuali + 6 partite 4v4 con schede ok`);
 process.exit(ok?0:1);

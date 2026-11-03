@@ -287,7 +287,7 @@ function petTarget(G,P){const en=enemies(G,P).filter(o=>dist(P,o)<=P.range&&(dis
 function petMove(G,P){if(P.kind!=='automa'||P.trat>0)return 0;const en=enemies(G,P);if(!en.length)return 0;
   const pc=en.filter(o=>!o.isPet),pool=pc.length?pc:en;const own=P.owner;
   const T=pool.reduce((a,b)=>dist(P,a)+(own.pf>0?dist(own,a)*0.5:0)<=dist(P,b)+(own.pf>0?dist(own,b)*0.5:0)?a:b);if(dist(P,T)<=1)return 0;return stepToward(G,P,T,3);}
-function petAttack(G,P,L,arrows,why){if(P.pf<=0)return;if((P.jam||0)>=curN){L.push(`${nm(P)} è inceppato e resta fermo.`);return;}
+function* petAttack(G,P,L,arrows,why){if(P.pf<=0)return;if((P.jam||0)>=curN){L.push(`${nm(P)} è inceppato e resta fermo.`);return;}
   if(P.kind==='automa'&&why){const en=enemies(G,P);if(en.length&&!en.some(o=>dist(P,o)<=1)){const pc=en.filter(o=>!o.isPet);const T=(pc.length?pc:en).reduce((a,b)=>dist(P,a)<=dist(P,b)?a:b);const fr=[P.x,P.y];if(stepToward(G,P,T,2))arrows.push({a:fr,b:[P.x,P.y],team:P.team,kind:'move'});}}
   const T=petTarget(G,P);if(!T){if(!why)return;L.push(`${nm(P)} non ha nessuno a portata.`);return;}
   const O=P.owner,turret=P.kind==='torretta',a={type:turret?'Sparo':['Colpo','Rottura','Aggiramento'][Math.floor(RND()*3)],flat:Math.floor((O.mod.INT||0)/2),flatTxt:'',dice:[1,6],base:false,burn:false,fire:false};
@@ -299,7 +299,7 @@ function petAttack(G,P,L,arrows,why){if(P.pf<=0)return;if((P.jam||0)>=curN){L.pu
   if(tierD(P.L)){const x=roll(tierD(P.L),6);dmg+=x;parts.push(`livello +${tierD(P.L)}d6`);}
   if(why){dmg+=0;}
   L.push(`${nm(P)} ${turret?'spara':'attacca'}${why?' ('+why+')':''}: ${dmg} danni potenziali [${parts.join(', ')}].`);
-  hit(G,P,T,{c:{n:P.name},src:null},a,{},dmg,{half:P.interr==='half',burn:false,baseEl:null},L,arrows);}
+  yield* hit(G,P,T,{c:{n:P.name},src:null},a,{},dmg,{half:P.interr==='half',burn:false,baseEl:null},L,arrows);}
 function jam(T){if(T.isPet){T.jam=curN+1;return ` ${T.name} è <b>Inceppato</b>: si ferma per uno scambio.`;}
   const r=[];if(T.gun&&T.ammo>0&&RULES.jamGun){if(RULES.jamGun==='empty'){T.ammo=0;r.push('il tamburo si svuota');}else{T.ammo=Math.max(0,T.ammo-RULES.jamGun);r.push(`perde ${RULES.jamGun} colpi`);}}if(T.hasPro&&!T.protBroken){T.hotUntil=Math.max(T.hotUntil,curN+1);r.push('la protesi si blocca per uno scambio');}
   if(RULES.jamAlch&&T.deckList&&T.deckList.some(d=>d.c.tr)){T.logo=(T.logo||0)+1;r.push(`gli strumenti alchemici si guastano: Logoramento ${T.logo}`);}if(!r.length){T.stxNext.A=1;r.push('è Rallentato');}return ` ${T.name} è <b>Inceppato</b>: ${r.join(' e ')}.`;}
@@ -318,7 +318,7 @@ function ingEnd(G,F,L){const c=F.card.c;
   if(c.pr&&!F.exh){F.press+=Math.max(0,c.pr-(F.b10A&&fxOf(c).cat==='heal'?1:0));if(F.press>=F.pressMax){F.press=0;F.hotUntil=curN+1;F.stats.hot=(F.stats.hot||0)+1;L.push(`La protesi di ${nm(F)} si <b>surriscalda</b>: le sue carte di protesi restano bloccate nel prossimo scambio.`);}}}
 /* ---- risoluzione ---- */
 function degrade(o){return o==='V'?'R':'P';}
-function act(G,F,L,arrows){
+function* act(G,F,L,arrows){
   if(F.exh){L.push(`${nm(F)} è <b>Esausto</b> (stamina ${F.st}): gioca <i>${esc(F.card.c.n)}</i> senza pagarla, ma solo per difendersi.`);return;}
   const d=F.card,c=d.c,e=fxOf(c),half=F.interr==='half';const ally=allies(G,F),en=enemies(G,F);
   if(e.cat==='zav'){L.push(`${nm(F)} gioca la zavorra <i>${esc(c.n)}</i>: non fa nulla.`);return;}
@@ -340,7 +340,7 @@ function act(G,F,L,arrows){
     arrows.push({a:[F.x,F.y],b:[p.x,p.y],team:F.team,kind:'heal'});L.push(`${nm(F)} piazza una <b>torretta</b> (Integrità ${P.pfMax}): sparerà da sola a ogni scambio.`);return;}
   if(e.cat==='command'){const A=petsOf(G,F,'automa')[0];if(!A){L.push(`${nm(F)} dà un ordine, ma il suo automa è a terra.`);return;}
     if(c.lv){if(!tecReady(F,d)){L.push(`${nm(F)} prova <i>${esc(c.n)}</i> ma i pezzi sul banco non bastano.`);return;}F.fl-=3;F.chain=[];A.war=true;A.pfMax+=8;A.pf+=8;F.stats.tec++;L.push(`${nm(F)} lancia <i>${esc(c.n)}</i>: ${nm(A)} si trasforma in automa da guerra (+8 Integrità, +2d6 danni).`);}
-    petAttack(G,A,L,arrows,'ordine');return;}
+    yield* petAttack(G,A,L,arrows,'ordine');return;}
   if(e.cat==='heal'){let ts=e.hall?G.fs.filter(o=>o.team===F.team&&!o.isPet&&dist(F,o)<=e.range&&(o.pf>0||e.revive)):[F.tgt].filter(o=>o&&dist(F,o)<=e.range&&(o.pf>0||e.revive));
     if(!ts.length){L.push(`${nm(F)} voleva curare ma non ha più nessuno a portata.`);return;}
     ts.forEach(o=>{let h=roll(...e.hd)+(e.hsag?F.mod[e.hsag]||0:0)+(F.has('A9')?roll(1,6):0);if(half)h=Math.floor(h/2);const eng=RULES.healEng&&(RULES.healEng!=='self'||o===F)&&o.pf>0&&G.fs.some(x=>x.team!==o.team&&x.pf>0&&dist(x,o)<=1);if(eng)h=Math.floor(h/2);const brn=RULES.douse&&o.burn>0&&(['A','B'].includes(elemOf(F,d))||['A','B'].includes(F.el));if(brn)o.burn=0;
@@ -381,12 +381,12 @@ function act(G,F,L,arrows){
     else ts=[T,...en.filter(o=>o!==T&&dist(o,T)<=3)].slice(0,e.area.n);
     if(RULES.ff&&F.fz!=='dono'){const fr=ts.filter(o=>o.team===F.team);if(fr.length)notes.push('fuoco amico su '+fr.map(o=>o.name).join(', '));}}
   L.push(`${nm(F)} ${c.lv?'lancia la tecnica':'attacca con la metà alta di'} <i>${esc(c.n)}</i>${c.lv?'':' ('+a.type+(dist(F,T)>1?' a distanza':'')+')'}: ${dmg} danni potenziali [${parts.join(', ')||'—'}]${notes.length?' · '+notes.join(' · '):''}${half?' · è stato colpito prima e attacca a metà forza':''}${ts.length>1?' · colpisce '+ts.length+' bersagli':''}.`);
-  ts.forEach(t=>hit(G,F,t,d,a,e,dmg,{half,burn,baseEl},L,arrows));
+  for(const t of ts)yield* hit(G,F,t,d,a,e,dmg,{half,burn,baseEl},L,arrows);
 }
 function hurt(T,x,k=1){const ab=Math.min(T.integ||0,x*k);if(ab)T.integ-=ab;T.pf-=x-Math.ceil(ab/k);return ab;}
 function rdOf(T){const r=(T.post.includes('Pelle di Roccia')?2:0)+(T.post.includes('Corazza di Lava')?2:0)+(T.post.includes('Blindatura')?2:0)+(T.post.includes('Caldaia Rovente')?2:0)+(T.rd5>0?(T.rdSV||5):0)+(T.has('T15')&&!(T.fz==='dono'&&(T.softUntil||0)>=curN)?4:0)+(T.has('K8')&&T.logo>=2?2:0)+(T.rdT||0)+(T.rdTmp||0);return RULES.rdCap?Math.min(RULES.rdCap,r):r;}
-function hit(G,F,T,d,a,e,dmg,o,L,arrows){const b0=new Set(Object.keys(T.stxNext||{}));hit0(G,F,T,d,a,e,dmg,o,L,arrows);T.stxNomi=T.stxNomi||{};for(const k in (T.stxNext||{}))if(!b0.has(k))T.stxNomi[k]=(F.R||T.R).ST_TXT[k]||k;}
-function hit0(G,F,T,d,a,e,dmg,o,L,arrows){
+function* hit(G,F,T,d,a,e,dmg,o,L,arrows){const b0=new Set(Object.keys(T.stxNext||{}));yield* hit0(G,F,T,d,a,e,dmg,o,L,arrows);T.stxNomi=T.stxNomi||{};for(const k in (T.stxNext||{}))if(!b0.has(k))T.stxNomi[k]=(F.R||T.R).ST_TXT[k]||k;}
+function* hit0(G,F,T,d,a,e,dmg,o,L,arrows){
   const ranged=dist(F,T)>1;let out,dtxt,extra='',defType=null;
   let triP=false;const spU=!!F.spir[T.id];if(spU){delete F.spir[T.id];F.stats.spir++;F.spUsed=true;}
   {let ok=true;if(T.sbil){T.sbil=false;if(T.st>=3){T.st-=3;extra+=` ${T.name} è Sbilanciato e paga 3 stamina per difendersi.`;}else ok=false;}
@@ -450,11 +450,11 @@ function hit0(G,F,T,d,a,e,dmg,o,L,arrows){
   if(T.pf>0&&F.pf>0){
     if(out==='V'&&e.push&&defType==='Parata')extra+=` La Parata Vinta blocca anche la spinta.`;
     if(out==='V'&&defType==='Schivata'&&T.trat<=0&&!(T.lega>0)){const r=((T.el==='A'||T.el==='K')?3:2)+(T.fz==='dono'&&T.has('V10')&&T.taken.find(t=>t.id==='V10').opt===1?2:0);const back=T.P.ai==='ranged'||T.P.ai==='healer';
-      if(ranged&&!back){const fr=[T.x,T.y];const m=stepToward(G,T,F,r);if(m){extra+=` Schivata riuscita: ${T.name} ne approfitta per avvicinarsi di ${m} a chi ha tirato.`;arrows.push({a:fr,b:[T.x,T.y],team:T.team,kind:'move'});}}
-      else{const m=reposition(G,T,F,ranged?Math.min(r,1)+0:r,back?'disengage':'orbit',arrows);if(m)extra+=back?` Schivata riuscita: ${T.name} si disingaggia ${m}.`:` Schivata riuscita: ${T.name} si riposiziona attorno a ${F.name} ${m}.`;}}
-    if(!ranged&&e.attr&&out!=='V'&&F.trat<=0&&(out==='R'||F.pf<F.pfMax*0.4||a.type!=='Aggiramento')&&reposition(G,F,T,3,'disengage',arrows)){
+      if(ranged&&!back){const m=yield* sceltaRipos(G,T,F,r,'avvicina',arrows,'schivata');if(m){extra+=` Schivata riuscita: ${T.name} ne approfitta per avvicinarsi ${m} a chi ha tirato.`;}}
+      else{const m=yield* sceltaRipos(G,T,F,ranged?Math.min(r,1)+0:r,back?'disengage':'orbit',arrows,'schivata');if(m)extra+=back?` Schivata riuscita: ${T.name} si disingaggia ${m}.`:` Schivata riuscita: ${T.name} si riposiziona attorno a ${F.name} ${m}.`;}}
+    if(!ranged&&e.attr&&out!=='V'&&F.trat<=0&&(out==='R'||F.pf<F.pfMax*0.4||a.type!=='Aggiramento')&&(yield* sceltaRipos(G,F,T,3,'disengage',arrows,'attraversa'))){
       extra+=` Attraversa: ${F.name} passa oltre ${T.name} ed esce dall'ingaggio senza attacco di opportunità (niente Spiraglio).`;}
-    else if(!ranged&&a.type==='Aggiramento'&&out!=='V'&&F.trat<=0){const m=reposition(G,F,T,2,'flank',arrows);
+    else if(!ranged&&a.type==='Aggiramento'&&out!=='V'&&F.trat<=0){const m=yield* sceltaRipos(G,F,T,2,'flank',arrows,'aggiramento');
       if(m){extra+=` Aggiramento riuscito: ${F.name} sceglie di girare attorno a ${T.name} ${m}`;if(out==='P'&&!RULES.slancio&&!(RULES.noChain&&F.spUsed)){F.spir[T.id]=true;extra+=' e, essendosi spostato alle sue spalle, ottiene lo <b>Spiraglio</b>';}else if(out==='P')extra+=' (ha già usato uno Spiraglio in questo scambio: niente Spiraglio nuovo)';extra+='.';}
       else extra+=` ${F.name} non trova caselle libere attorno a ${T.name}: resta dov'è e niente Spiraglio.`;}
     if(!ranged&&out==='V'&&defType==='Contrattacco'){const K=RULES.counter;
@@ -465,7 +465,7 @@ function hit0(G,F,T,d,a,e,dmg,o,L,arrows){
   }
   L.push(`→ ${nm(T)} ${dtxt} → <b>${fin} ${fin===1?'danno':'danni'}</b>${T.pf<=0?' · <b>'+T.name+' è a terra</b>':''}.${extra}`);
 }
-function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.id].ai?manual[F.id]:null;
+function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.id].ai?manual[F.id]:null;G.manuali=new Set(G.fs.filter(F=>man(F)).map(F=>F.id));
   const L=[],arrows=[];curN=n;const alive=()=>G.fs.filter(f=>f.pf>0);
   alive().forEach(F=>{F.spUsed=false;F.slan=F.slanNext||0;F.slanNext=0;if(RULES.spExp&&F.spAge)for(const k in F.spir)if(F.spAge[k]<n-1){delete F.spir[k];}if(n>1){if(F.noRec){F.noRec=false;if(RULES.fulm==='mezzo')F.st+=1;}else F.st=Math.min(F.stMax,F.st+RULES.stRec);}F.debtNow=false;F.exh=false;if(F.adoUsed&&F.adoUsed<n)F.adoUsed=0;F.sbil=F.sbilNext;F.sbilNext=false;Object.assign(F.spir,F.spirNext);F.spirNext={};
     F.stx=F.stxNext;F.stxNext={};F.bDmg=F.bDmgNext;F.bDmgNext=0;F.bVel=F.bVelNext;F.bVelNext=0;F.taunt=F.tauntNext;F.tauntNext=null;
@@ -486,11 +486,11 @@ function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.i
   const pos=snap(G);
   acts.sort((a,b)=>b.vel-a.vel);
   const groups=[];acts.forEach(F=>{const g=groups[groups.length-1];if(g&&g[0].vel===F.vel)g.push(F);else groups.push([F]);});
-  groups.forEach(g=>{if(g.length>1&&g.filter(f=>f.card).length>1)L.push(`Velocità ${g[0].vel} per ${g.map(nm).join(' e ')}: agiscono insieme.`);
-    g.forEach(F=>{if(F.pf<=0){F.acted=true;return;}if(F.isPet){petAttack(G,F,L,arrows);F.acted=true;return;}if(!F.card){L.push(`${nm(F)} non ha stamina per nessuna carta e resta scoperto.`);F.acted=true;return;}
-      if(F.interr==='skip'){L.push(`${nm(F)} è stato interrotto: la sua <i>${esc(F.card.c.n)}</i> serve solo a difendersi.`);F.acted=true;return;}
-      act(G,F,L,arrows);});
-    g.forEach(F=>F.acted=true);});
+  for(const g of groups){if(g.length>1&&g.filter(f=>f.card).length>1)L.push(`Velocità ${g[0].vel} per ${g.map(nm).join(' e ')}: agiscono insieme.`);
+    for(const F of g){if(F.pf<=0){F.acted=true;continue;}if(F.isPet){yield* petAttack(G,F,L,arrows);F.acted=true;continue;}if(!F.card){L.push(`${nm(F)} non ha stamina per nessuna carta e resta scoperto.`);F.acted=true;continue;}
+      if(F.interr==='skip'){L.push(`${nm(F)} è stato interrotto: la sua <i>${esc(F.card.c.n)}</i> serve solo a difendersi.`);F.acted=true;continue;}
+      yield* act(G,F,L,arrows);}
+    g.forEach(F=>F.acted=true);}
   // Spiragli incrociati nello stesso scambio (ancora non usati) si annullano
   if(RULES.spirCancel)G.fs.forEach(F=>G.fs.forEach(O=>{if(F.id>=O.id||F.team===O.team)return;const fNew=(F.spir[O.id]||F.spirNext[O.id])&&!sp0.get(F.id)[O.id],oNew=(O.spir[F.id]||O.spirNext[F.id])&&!sp0.get(O.id)[F.id];
     if(fNew&&oNew){delete F.spir[O.id];delete F.spirNext[O.id];delete O.spir[F.id];delete O.spirNext[F.id];L.push(`${nm(F)} e ${nm(O)} si sono aperti un varco a vicenda nello stesso scambio: i due <b>Spiragli si annullano</b>.`);}}));
@@ -606,6 +606,16 @@ function* muoviTutti(G,n,man,L,arrows,moves){
     if(RULES.ado&&!(RULES.v4ado&&F.has('V4')))(adj0.get(F.id)||[]).filter(o=>o.pf>0&&dist(F,o)>1).forEach(o=>attaccoOpportunita(G,o,F,L,arrows,'che si disimpegna senza Schivata né Aggiramento'));});
 }
 function exchange(G,n,manual){const g=exchangeGen(G,n,manual);let r=g.next();while(!r.done)r=g.next(null);return r.value;}
+/* Spostamenti dopo Schivata Vinta, Aggiramento riuscito e Attraversa: per i personaggi comandati a mano la casella la sceglie il giocatore (o resta fermo). */
+function* sceltaRipos(G,M,O,r,mode,arrows,kind){
+  if(!(G.manuali&&G.manuali.has(M.id))){if(mode==='avvicina'){const fr=[M.x,M.y];const m=stepToward(G,M,O,r);if(m)arrows.push({a:fr,b:[M.x,M.y],team:M.team,kind:'move'});return m?`di ${m}`:'';}return reposition(G,M,O,r,mode,arrows);}
+  const tr=M.trat;M.trat=0;const R=bfs(G,M,r);M.trat=tr;const cs=[];
+  for(const[k,s]of R){if(!s)continue;const[x,y]=k.split(',').map(Number),p={x,y};
+    if(mode==='disengage'&&dist(p,O)<=1)continue;if((mode==='flank'||mode==='orbit')&&dist(p,O)!==1)continue;if(mode==='avvicina'&&dist(p,O)>=dist(M,O))continue;cs.push([x,y,s]);}
+  if(!cs.length)return '';
+  const ans=yield{tipo:'riposiziona',chi:[{id:M.id,nome:M.name,motivo:kind,contro:O.id,caselle:cs.map(c=>[c[0],c[1]])}]};
+  const v=ans&&ans[M.id];const c=v&&cs.find(c=>c[0]===v[0]&&c[1]===v[1]);if(!c)return '';
+  const from=[M.x,M.y];M.x=c[0];M.y=c[1];arrows.push({a:from,b:[M.x,M.y],team:M.team,kind:'move'});return `di ${c[2]} ${c[2]===1?'casella':'caselle'}`;}
 
 
 /* ===================== API PER L'APP: partita manuale =====================

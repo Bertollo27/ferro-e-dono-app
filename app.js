@@ -6,7 +6,7 @@
    ============================================================ */
 (()=>{
 'use strict';
-const VERSIONE='0.2 · fase 1';
+const VERSIONE='0.3 · fase 1';
 const $app=document.getElementById('app');
 const E=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -197,12 +197,15 @@ function vGriglia(opt={}){
   let tgtIds=new Set(),cura=false;
   if(opt.raggiungibili)for(const k of opt.raggiungibili.keys()){const[x,y]=k.split(',').map(Number);parts.push(`<rect class="g-raggiungibile" x="${x*C+2}" y="${y*C+2}" width="${C-4}" height="${C-4}" rx="4" pointer-events="none"/>`);}
   if(opt.bersagli){opt.bersagli.list.forEach(o=>tgtIds.add(o.id));cura=opt.bersagli.kind==='heal';}
+  if(opt.ripos)opt.ripos.caselle.forEach(([x,y])=>{const sc=opt.ripos.scelta&&opt.ripos.scelta[0]===x&&opt.ripos.scelta[1]===y;
+    parts.push(`<rect class="g-raggiungibile" x="${x*C+2}" y="${y*C+2}" width="${C-4}" height="${C-4}" rx="4" data-act="ripos-cella" data-x="${x}" data-y="${y}"/>`);
+    if(sc)parts.push(`<rect class="g-meta" x="${x*C+2}" y="${y*C+2}" width="${C-4}" height="${C-4}" rx="5" pointer-events="none"/>`);});
   if(p&&p.move&&RULES.movSim){const pts=[[F.x,F.y],...percorso(G,F,p.move)];if(pts.length>1)parts.push(`<polyline class="g-freccia" points="${pts.map(([x,y])=>`${x*C+C/2},${y*C+C/2}`).join(' ')}" stroke="var(--ottone)" stroke-dasharray="2 4" pointer-events="none"/>`);}
   if(p&&p.move)parts.push(`<rect class="g-meta" x="${p.move[0]*C+2}" y="${p.move[1]*C+2}" width="${C-4}" height="${C-4}" rx="5" pointer-events="none"/>`);
   // frecce dell'ultimo scambio
   if(opt.frecce){(opt.mosse||[]).forEach(m=>parts.push(freccia(m.a,m.b,colSq(m.team),C,'4 4')));opt.frecce.forEach(a=>parts.push(freccia(a.a,a.b,a.kind==='heal'||a.kind==='repair'?'var(--vinta)':colSq(a.team),C,'')));}
   G.fs.filter(o=>o.pf>0).forEach(o=>{const cx=o.x*C+C/2,cy=o.y*C+C/2,r=o.isPet?11:14,fr=o.pf/o.pfMax;
-    const sel=(F&&o.id===F.id)||(opt.collisione&&opt.collisione.some(c=>c.id===o.id)),tg=tgtIds.has(o.id),tsel=tg&&p&&p.t===o.id;
+    const sel=(F&&o.id===F.id)||(opt.collisione&&opt.collisione.some(c=>c.id===o.id))||(opt.ripos&&opt.ripos.id===o.id),tg=tgtIds.has(o.id),tsel=tg&&p&&p.t===o.id;
     parts.push(`<g class="g-pedina toccabile" data-act="pedina" data-id="${o.id}" role="button" aria-label="${E(o.name)}">
       ${sel?`<circle class="g-scelto" cx="${cx}" cy="${cy}" r="${r+3}"/>`:''}
       ${tg?`<circle class="g-bersaglio${cura?' cura':''}${tsel?' scelto':''}" cx="${cx}" cy="${cy}" r="${r+4}"/>`:''}
@@ -286,6 +289,11 @@ function vFoglio(){
       ${vGriglia({frecce:r.arrows,mosse:r.moves})}
       <h3>Cosa è successo</h3><ol class="registro">${r.lines.map(l=>`<li>${l}</li>`).join('')}</ol>
       ${btn('chiudi-foglio',S.G.over?'Vedi il risultato':'Prossimo Scambio','primario grande')}`;}
+  else if(f.tipo==='riposiziona'){const G=S.G,c=f.chi[0],o=personaggio(G,c.contro),sc=f.scelte[c.id];
+    const perche={schivata:'Schivata riuscita: puoi spostarti in una delle caselle evidenziate.',aggiramento:`Aggiramento riuscito: puoi girare attorno a ${o.name}. Se la sua difesa era Persa, spostarti ti dà lo Spiraglio contro di lui.`,attraversa:`Attraversa: puoi passare oltre ${o.name} e uscire dall'ingaggio senza attacco di opportunità.`}[c.motivo]||'Puoi spostarti.';
+    html=`<h2>${E(c.nome)} può spostarsi</h2><p class="piccolo">${E(perche)} Tocca una casella verde, oppure resta dove sei.</p>
+      ${vGriglia({ripos:{id:c.id,caselle:c.caselle,scelta:sc}})}
+      <div class="riga">${btn('ripos-resta','Resta dov\'è','')}<span class="spazio"></span>${btn('ripos-ok',sc?'Spostati qui':'Scegli una casella','primario',sc?'':'disabled')}</div>`;}
   else if(f.tipo==='collisione'){const G=S.G;
     html=`<h2>Collisione!</h2><p class="piccolo">Durante il movimento ${f.chi.length>1?'questi personaggi hanno':'il tuo personaggio ha'} incontrato un avversario. Nessuno sa cosa sceglie l'altro.</p>
       <ul class="registro piccolo"><li><b>Prosegui</b>: se l'altro resta, ti fa un attacco di opportunità; se prosegue anche lui, vi scansate pagando 1 stamina a testa.</li><li><b>Resta</b>: se l'altro prosegue gli fai un attacco di opportunità (costa 1 stamina) e poi completate il movimento; se resta anche lui, vi fermate qui ingaggiati.</li></ul>
@@ -350,7 +358,7 @@ function risolvi(){
   S.piani={};dopoPasso(risolviScambio(G,piani));
 }
 function dopoPasso(r){
-  if(r.attesa){S.foglio={tipo:'collisione',chi:r.attesa.chi,scelte:{}};return;}
+  if(r.attesa){S.foglio={tipo:r.attesa.tipo,chi:r.attesa.chi,scelte:{}};return;}
   S.ultimo=r;S.foglio={tipo:'scambio',ris:r};if(S.G.over)salvaRegistro();
 }
 function rivalidaCarta(F){const p=piano(F.id);if(p.ci==null)return;const d=F.hand[p.ci];
@@ -403,13 +411,16 @@ const AZ={
   ia:el=>{const F=personaggio(S.G,S.attivo);if(!F)return;S.ia[F.id]=!S.ia[F.id];},
   risolvi:()=>risolvi(),
   'scelta-coll':el=>{S.foglio.scelte[el.dataset.id]=el.dataset.v;},
+  'ripos-cella':el=>{const f=S.foglio;f.scelte[f.chi[0].id]=[+el.dataset.x,+el.dataset.y];},
+  'ripos-resta':()=>{dopoPasso(continuaScambio(S.G,{}));},
+  'ripos-ok':()=>{dopoPasso(continuaScambio(S.G,S.foglio.scelte));},
   'continua-coll':()=>{dopoPasso(continuaScambio(S.G,S.foglio.scelte));},
   rivedi:()=>{S.foglio={tipo:'scambio',ris:S.ultimo};},
   'menu-scontro':()=>{S.foglio={tipo:'menu'};},
   'tutti-ia':()=>{miei().forEach(F=>S.ia[F.id]=true);S.foglio=null;},
   arrenditi:()=>{S.G.over='B';salvaRegistro();S.foglio=null;S.schermo='fine';},
   'chiudi-foglio':()=>{const f=S.foglio;S.foglio=null;if(f&&f.tipo==='scambio'&&S.G&&S.G.over)S.schermo='fine';},
-  'sfondo-foglio':(el,ev)=>{if(ev.target===el&&S.foglio&&S.foglio.tipo!=='collisione'&&!(S.foglio.tipo==='scambio'&&S.G.over))S.foglio=null;else return false;},
+  'sfondo-foglio':(el,ev)=>{if(ev.target===el&&S.foglio&&S.foglio.tipo!=='collisione'&&S.foglio.tipo!=='riposiziona'&&!(S.foglio.tipo==='scambio'&&S.G.over))S.foglio=null;else return false;},
   rivincita:()=>avviaPartita(),
   esporta:()=>scaricaFile('ferro-e-dono-partite.json',JSON.stringify(mem.get('fd-registro',[]),null,1)),
   copia:()=>{const t=JSON.stringify(mem.get('fd-registro',[]));
@@ -428,7 +439,7 @@ $app.addEventListener('change',ev=>{
   else if(el.dataset.act==='mappa'){S.cfg.map=el.value;salvaCfg();}
   else if(el.dataset.act==='ia'){AZ.ia();render();}
 });
-document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&S.foglio&&S.foglio.tipo!=='collisione'&&!(S.foglio.tipo==='scambio'&&S.G&&S.G.over)){S.foglio=null;render();}});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&S.foglio&&S.foglio.tipo!=='collisione'&&S.foglio.tipo!=='riposiziona'&&!(S.foglio.tipo==='scambio'&&S.G&&S.G.over)){S.foglio=null;render();}});
 window.addEventListener('beforeunload',ev=>{if(S.schermo==='scontro'&&S.G&&!S.G.over){ev.preventDefault();ev.returnValue='';}});
 
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
