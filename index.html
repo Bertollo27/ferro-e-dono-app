@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ferro &amp; Dono</title>
+<meta name="description" content="Combattimento a carte di Ferro & Dono: Dono e Ingegno su griglia, contro l'IA.">
+<meta name="theme-color" content="#2a2219">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone/icona-192.png">
+<link rel="apple-touch-icon" href="icone/icona-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ferro & Dono">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="stile.css">
+</head>
+<body>
+<div id="app" aria-live="polite"></div>
+<noscript>Per giocare serve JavaScript attivo.</noscript>
+<!-- Ordine importante: prima i dati, poi il motore, poi l'interfaccia -->
+<script src="dati-dono.js"></script>
+<script src="dati-ingegno.js"></script>
+<script src="motore.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

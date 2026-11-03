@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Come si gioca · Ferro &amp; Dono</title>
+<meta name="theme-color" content="#2a2219">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone/icona-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: una colonna stretta da leggere sul telefono, schemi a tutta larghezza; carta e triangolo disegnati in HTML */
+:root{
+  --bg:#efece4; --paper:#faf8f3; --ink:#1f1c18; --muted:#62594d; --line:#d5cdbe; --soft:#e6e0d3;
+  --brass:#8a5f12; --on-brass:#fff;
+  --win:#2c7a4b; --half:#a06a00; --lose:#b0321c;
+  --tA:#b3261e; --tB:#1f4fa8;
+  --F:#c4462b; --V:#2d8763; --A:#2f6ea6; --T:#87672e; --L:#9f810c;
+  --ff-d:"Shippori Mincho B1","Hiragino Mincho ProN",Georgia,serif;
+  --ff-b:"Zen Kaku Gothic New","Segoe UI",system-ui,sans-serif;
+  --ff-m:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16140f; --paper:#1f1c16; --ink:#ece6da; --muted:#a99f8f; --line:#3a352b; --soft:#2a261e;
+  --brass:#d9a648; --on-brass:#16140f; --win:#5fc38a; --half:#e0a83a; --lose:#ec7a5a;
+  --tA:#ff7b6e; --tB:#7aa7ff; --F:#e36a4e; --V:#5cbd95; --A:#62a1d8; --T:#c39e60; --L:#dabb42; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16140f; --paper:#1f1c16; --ink:#ece6da; --muted:#a99f8f; --line:#3a352b; --soft:#2a261e;
+  --brass:#d9a648; --on-brass:#16140f; --win:#5fc38a; --half:#e0a83a; --lose:#ec7a5a;
+  --tA:#ff7b6e; --tB:#7aa7ff; --F:#e36a4e; --V:#5cbd95; --A:#62a1d8; --T:#c39e60; --L:#dabb42; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15.5px/1.55 var(--ff-b)}
+.wrap{max-width:700px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px;display:flex;flex-direction:column;gap:34px}
+header h1{font:800 34px/1.1 var(--ff-d);margin:0 0 8px;text-wrap:balance;letter-spacing:.01em}
+header p{margin:0;color:var(--muted);max-width:60ch}
+.seal{display:inline-block;font:600 12px var(--ff-m);letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin-bottom:10px}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+h2{font:700 23px/1.2 var(--ff-d);margin:0;text-wrap:balance;display:flex;gap:10px;align-items:baseline}
+h2 .n{font:600 13px var(--ff-m);color:var(--brass)}
+p{margin:0;max-width:65ch}
+.muted{color:var(--muted)}
+b{font-weight:700}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+/* flusso dello Scambio */
+.flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;counter-reset:f}
+.flow li{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 8px;font-size:13.5px;line-height:1.35;position:relative;counter-increment:f;min-width:0}
+.flow li::before{content:counter(f);display:block;font:600 12px var(--ff-m);color:var(--brass);margin-bottom:4px}
+.flow li b{display:block;font-size:14px}
+.flow li:not(:last-child)::after{content:"›";position:absolute;right:-6px;top:50%;transform:translateY(-50%);color:var(--brass);font-weight:700;z-index:1}
+@media (max-width:620px){.flow{grid-template-columns:minmax(0,1fr)}.flow li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:0 8px}.flow li::before{grid-row:span 2;margin:0}.flow li:not(:last-child)::after{content:"⌄";right:auto;left:12px;top:auto;bottom:-13px;transform:none}}
+/* carta */
+.cardrow{display:grid;grid-template-columns:minmax(0,250px) minmax(0,1fr);gap:16px;align-items:center}
+@media (max-width:560px){.cardrow{grid-template-columns:minmax(0,1fr)}}
+.card{border:1.5px solid var(--ink);border-radius:10px;background:var(--paper);overflow:hidden;font-size:13px;max-width:280px}
+.card .hd{background:var(--F);color:#fff;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card .hd .nm{font:700 16px var(--ff-d)}
+.card .hd .v{font:600 12px var(--ff-m);white-space:nowrap}
+.card .half{padding:8px 10px;border-top:1px solid var(--line)}
+.card .half small{display:block;font:600 10.5px var(--ff-m);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card .ft{padding:6px 10px;border-top:1px solid var(--line);font:500 12px var(--ff-m);color:var(--muted)}
+.tag{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:var(--brass);color:var(--on-brass);font:600 12px var(--ff-m);margin-right:6px;flex:none}
+.keys{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:14px}
+.keys li{display:flex;align-items:flex-start}
+/* triangolo */
+.tri{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px;align-items:center}
+@media (max-width:560px){.tri{grid-template-columns:minmax(0,1fr)}}
+.wheel{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;text-align:center}
+.wheel svg{width:100%;max-width:240px;height:auto}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:7px 6px;text-align:center}
+th{font-weight:700;background:var(--soft);font-size:12.5px}
+th.row{text-align:left}
+.V{color:var(--win);font-weight:700}.R{color:var(--half);font-weight:700}.P{color:var(--lose);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px}
+/* esempio */
+.ex{display:flex;flex-direction:column;gap:10px}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.who{border:1px solid var(--line);border-left:4px solid var(--tA);border-radius:8px;padding:8px 10px;background:var(--paper);font-size:13.5px;min-width:0}
+.who.d{border-left-color:var(--tB)}
+.who b{display:block}
+.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px;max-width:65ch}
+.res{font:600 13px var(--ff-m);white-space:normal;display:inline-block}
+/* vantaggi */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;min-width:0}
+.tile b{display:block;font-family:var(--ff-d);font-size:16px;margin-bottom:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:4px 10px;font-size:13px}
+.chip i{font-style:normal;font-weight:700}
+/* ragnatela */
+.web{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:16px;align-items:center}
+@media (max-width:560px){.web{grid-template-columns:minmax(0,1fr)}.web svg{max-width:220px;margin:0 auto}}
+.web svg{width:100%;height:auto;display:block}
+.web text{font-family:var(--ff-b);font-size:11px;font-weight:700}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+html,body{margin:0}
+.torna{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);text-decoration:none;font-weight:600}
+.ing{--F:#a8432a;--V:#93700f;--A:#6b4fa0;--T:#3d6782}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+<p><a class="torna" href="./">‹ Torna al gioco</a></p>
+<header>
+  <span class="seal">Ferro &amp; Dono · guida rapida</span>
+  <h1>Come si gioca</h1>
+  <p>Due squadre su una griglia. Ognuno ha un mazzo di carte, e ogni carta serve sia ad attaccare sia a difendersi. Vince la squadra che resta in piedi.</p>
+</header>
+
+<section>
+  <h2><span class="n">1</span>Lo Scambio</h2>
+  <p>Il combattimento procede a <b>Scambi</b>. In ogni Scambio tutti scelgono in segreto, poi si rivela tutto insieme.</p>
+  <ol class="flow">
+    <li><b>Scegli</b>Per ogni personaggio: dove muoverlo, quale carta giocare e su chi.</li>
+    <li><b>Rivela</b>Tutte le carte si scoprono nello stesso momento.</li>
+    <li><b>Movimento</b>Ci si sposta, prima chi ha più Destrezza.</li>
+    <li><b>Azioni</b>Agisce prima la carta con più <b>Velocità</b>. A parità di Velocità si agisce insieme.</li>
+    <li><b>Fine</b>Effetti come Brucia, poi si pesca 1 carta e si recuperano 2 di stamina.</li>
+  </ol>
+  <p class="muted">Ogni carta si usa in due modi nello stesso Scambio: quando tocca a te attacchi con la metà alta, quando ti attaccano ti difendi con la metà bassa.</p>
+</section>
+
+<section>
+  <h2><span class="n">2</span>La carta</h2>
+  <div class="cardrow">
+    <div class="card" aria-label="Esempio di carta">
+      <div class="hd"><span class="nm"><span class="tag">A</span>Taglio Infuocato</span><span class="v"><span class="tag">B</span>Vel 7 · 2 st</span></div>
+      <div class="half"><small><span class="tag">C</span>Alta · attacco ✊</small>Colpo 4 + SAG</div>
+      <div class="half"><small><span class="tag">D</span>Bassa · difesa ✌️</small>Contrattacco 3 + SAG</div>
+      <div class="ft"><span class="tag">E</span>Sigillo: Serpente</div>
+    </div>
+    <ul class="keys">
+      <li><span class="tag">A</span><span>Il <b>nome</b>. Il colore indica l'elemento.</span></li>
+      <li><span class="tag">B</span><span>La <b>Velocità</b> decide chi agisce prima. Il <b>costo</b> si paga in stamina.</span></li>
+      <li><span class="tag">C</span><span>La <b>metà alta</b> è l'attacco: tipo e danno (un numero più una caratteristica, qui Saggezza).</span></li>
+      <li><span class="tag">D</span><span>La <b>metà bassa</b> è la difesa che usi se vieni attaccato.</span></li>
+      <li><span class="tag">E</span><span>Il <b>sigillo</b> si aggiunge alla tua catena e serve per le tecniche (vedi 5).</span></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>Attacco contro difesa</h2>
+  <div class="tri">
+    <div class="wheel">
+      <svg viewBox="0 0 240 210" role="img" aria-label="Sasso batte forbici, forbici batte carta, carta batte sasso">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--brass)"/></marker></defs>
+        <circle cx="120" cy="38" r="30" style="fill:var(--paper);stroke:var(--line);stroke-width:1.5"/>
+        <circle cx="42" cy="168" r="30" style="fill:var(--paper);stroke:var(--line);stroke-width:1.5"/>
+        <circle cx="198" cy="168" r="30" style="fill:var(--paper);stroke:var(--line);stroke-width:1.5"/>
+        <text x="120" y="47" text-anchor="middle" style="font-size:26px;fill:var(--ink)">✊</text>
+        <text x="198" y="177" text-anchor="middle" style="font-size:26px;fill:var(--ink)">✌️</text>
+        <text x="42" y="177" text-anchor="middle" style="font-size:26px;fill:var(--ink)">✋</text>
+        <path d="M146 58 L182 138" style="stroke:var(--brass);stroke-width:2.5;fill:none" marker-end="url(#ah)"/>
+        <path d="M166 172 L76 172" style="stroke:var(--brass);stroke-width:2.5;fill:none" marker-end="url(#ah)"/>
+        <path d="M58 140 L94 60" style="stroke:var(--brass);stroke-width:2.5;fill:none" marker-end="url(#ah)"/>
+      </svg>
+      <span class="muted">La freccia va da chi vince a chi perde.</span>
+    </div>
+    <div class="ex">
+      <p>Ogni attacco e ogni difesa ha un simbolo.</p>
+      <p><b>Attacchi:</b> ✊ Colpo, ✋ Aggiramento, ✌️ Rottura.<br><b>Difese:</b> ✊ Schivata, ✋ Parata, ✌️ Contrattacco.</p>
+      <div class="legend"><span><span class="V">Vinta</span> = 0 danni</span><span><span class="R">Retta</span> = metà</span><span><span class="P">Persa</span> = danno pieno</span></div>
+    </div>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th class="row">Attacco ↓ / Difesa →</th><th>✊ Schivata</th><th>✋ Parata</th><th>✌️ Contrattacco</th></tr></thead>
+    <tbody>
+      <tr><th class="row">✊ Colpo</th><td class="R">Retta</td><td class="V">Vinta</td><td class="P">Persa</td></tr>
+      <tr><th class="row">✋ Aggiramento</th><td class="P">Persa</td><td class="R">Retta</td><td class="V">Vinta</td></tr>
+      <tr><th class="row">✌️ Rottura</th><td class="V">Vinta</td><td class="P">Persa</td><td class="R">Retta</td></tr>
+      <tr><th class="row">Tecnica</th><td class="R">Retta</td><td class="R">Retta</td><td class="P">Persa</td></tr>
+    </tbody></table></div>
+  <p class="muted">Il risultato è dal punto di vista di chi difende. <b>A distanza</b> la Parata è Retta, la Schivata dietro una copertura è Vinta, e il Contrattacco è Retta (in compenso avanzi verso chi ti ha colpito). Se in uno stesso Scambio devi difenderti una seconda volta, quella difesa peggiora di un grado.</p>
+</section>
+
+<section>
+  <h2><span class="n">4</span>Un esempio</h2>
+  <div class="ex">
+    <div class="duo">
+      <div class="who"><b class="tA">A · Drago (Fuoco)</b>gioca Taglio Infuocato<br><span class="res">Vel 7 · ✊ Colpo · difesa ✌️</span></div>
+      <div class="who d"><b>D · Bastione (Terra)</b>gioca Pugno di Roccia<br><span class="res">Vel 4 · ✌️ Rottura · difesa ✋</span></div>
+    </div>
+    <ol class="steps">
+      <li><b>A è più veloce (7 contro 4) e attacca per primo.</b> Il suo Colpo ✊ incontra la Parata ✋ di D, quindi la difesa è <span class="V">Vinta</span> e A fa 0 danni. Visto che D ha difeso bene ed era più lento, ottiene lo <b>Spiraglio</b> contro A.</li>
+      <li><b>Ora attacca D</b>, con la Rottura ✌️ (7 + SAG 3 = 10). A si difende con la metà bassa della sua carta, Contrattacco ✌️: stesso simbolo, quindi <span class="R">Retta</span>.</li>
+      <li><b>D però usa lo Spiraglio</b>, che peggiora di un grado la difesa di A: da Retta diventa <span class="P">Persa</span>. A subisce tutti i <b>10 danni</b>.</li>
+    </ol>
+    <p class="muted">Se A avesse giocato una carta con difesa ✊ Schivata, la Rottura di D sarebbe andata a vuoto.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">5</span>Stamina, mazzo e tecniche</h2>
+  <div class="grid2">
+    <div class="tile"><b>Stamina</b>Muoversi costa 1 per casella, fino a 4 caselle (il Vento ne ha 2 gratis). Le carte costano da 0 a 3. Recuperi 2 per Scambio. Se non puoi pagare nessuna carta sei <b>Esausto</b> e ti limiti a difenderti.</div>
+    <div class="tile"><b>Mano e mazzo</b>Hai 5 carte in mano e ne peschi 1 alla fine di ogni Scambio. Quando il mazzo finisce rimescoli gli scarti, ma perdi 2 di stamina. Il mazzo va da 10 a 24 carte.</div>
+    <div class="tile"><b>Catena di sigilli</b>Ogni carta che giochi aggiunge il suo sigillo alla catena, che tiene gli ultimi 3. Il Jolly vale come qualsiasi sigillo. Per l'Ingegno i sigilli si chiamano <b>pezzi</b> e la catena è il <b>banco</b>.</div>
+    <div class="tile"><b>Tecniche</b>Una tecnica <b>Base</b> chiede 1 sigillo qualsiasi, una <b>Avanzata</b> i 2 sigilli indicati, una <b>Suprema</b> la sequenza di 3 più 3 di Flusso. Chi ha un solo elemento lancia la Suprema con 3 sigilli qualsiasi.</div>
+    <div class="tile"><b>Flusso</b>È la riserva di energia del Dono per tutto lo scontro: 2 + 1 ogni 3 livelli (+3 con Flusso Profondo). Non si ricarica da solo. Lo spendono solo le Supreme (3 a testa), quindi limita quante volte puoi lanciarle. Per l'Ingegno si chiama <b>Vapore</b> e funziona uguale.</div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">6</span>Vantaggi in combattimento</h2>
+  <div class="grid2">
+    <div class="tile"><b>Spiraglio</b>Ottieni lo Spiraglio quando la tua difesa è Vinta e tu e l'attaccante avete Velocità diverse. Nel tuo prossimo attacco contro di lui, la sua difesa peggiora di un grado. Scade alla fine dello Scambio successivo.</div>
+    <div class="tile"><b>Impeto</b>Se il tuo attacco vince il triangolo (difesa Persa), lo Scambio dopo hai +2 Velocità.</div>
+    <div class="tile"><b>Interruzione</b>Se colpisci prima un nemico più lento di almeno 2: con difesa Persa perde il suo attacco, con difesa Retta attacca a metà forza.</div>
+    <div class="tile"><b>Contrattacco</b>Un Contrattacco Vinto in mischia restituisce subito il colpo con il valore scritto sulla carta.</div>
+    <div class="tile"><b>Guardia rotta</b>Una Rottura che batte una Parata rende il difensore <b>Sbilanciato</b>: nello Scambio dopo difendersi gli costa 3 di stamina.</div>
+    <div class="tile"><b>Attacco di opportunità</b>Se ti allontani da un nemico che hai accanto camminando, senza Schivata né Aggiramento, lui ti colpisce gratis.</div>
+  </div>
+  <div class="chips" aria-label="Stati">
+    <span class="chip"><i style="color:var(--F)">Brucia</i> danni per 3 Scambi, spento dalle cure d'Acqua</span>
+    <span class="chip"><i style="color:var(--A)">Bagnato</i> −1 Velocità</span>
+    <span class="chip"><i style="color:var(--L)">Elettrizzato</i> −1 Velocità</span>
+    <span class="chip"><i style="color:var(--T)">Scosso</i> la prossima difesa peggiora</span>
+    <span class="chip"><i style="color:var(--V)">Sospinto</i> +1 Velocità</span>
+    <span class="chip"><i>Trattenuto</i> non ti muovi, non schivi, −2 Velocità</span>
+    <span class="chip"><i>Prono</i> −2 Velocità</span>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">7</span>Prima della partita: far crescere il personaggio</h2>
+  <div class="web">
+    <svg viewBox="0 0 200 200" role="img" aria-label="La Ragnatela: centro, quattro elementi sull'anello, incroci tra elementi vicini">
+      <circle cx="100" cy="100" r="86" style="fill:none;stroke:var(--line);stroke-dasharray:3 4"/>
+      <circle cx="100" cy="100" r="54" style="fill:none;stroke:var(--line);stroke-dasharray:3 4"/>
+      <circle cx="100" cy="100" r="20" style="fill:var(--soft);stroke:var(--brass);stroke-width:1.5"/>
+      <text x="100" y="104" text-anchor="middle" style="fill:var(--ink)">Centro</text>
+      <circle cx="100" cy="24" r="17" style="fill:var(--F)"/><text x="100" y="28" text-anchor="middle" style="fill:#fff">Fuoco</text>
+      <circle cx="176" cy="100" r="17" style="fill:var(--V)"/><text x="176" y="104" text-anchor="middle" style="fill:#fff">Vento</text>
+      <circle cx="100" cy="176" r="17" style="fill:var(--A)"/><text x="100" y="180" text-anchor="middle" style="fill:#fff">Acqua</text>
+      <circle cx="24" cy="100" r="17" style="fill:var(--T)"/><text x="24" y="104" text-anchor="middle" style="fill:#fff">Terra</text>
+      <text x="152" y="44" text-anchor="middle" style="fill:var(--muted)">Cenere</text>
+      <text x="152" y="162" text-anchor="middle" style="fill:var(--muted)">Fulmine</text>
+      <text x="48" y="162" text-anchor="middle" style="fill:var(--muted)">Legno</text>
+      <text x="48" y="44" text-anchor="middle" style="fill:var(--muted)">Magma</text>
+    </svg>
+    <div class="ex">
+      <p>Si sceglie un <b>livello uguale per tutti</b>, da 1 a 20. Ognuno parte da un personaggio base con il suo elemento e, <b>a ogni livello, prende un nodo</b> della Ragnatela: una carta nuova, un talento o una scelta. Chi non vuole pensarci usa il <b>percorso consigliato</b>.</p>
+      <p class="muted">Dentro un elemento si sale per anelli: il secondo anello si apre con 3 nodi, il terzo con 6, la chiave di volta con 8. Terzo anello e chiave sono solo per chi resta su un solo elemento. Dal livello 5 puoi aprire un secondo elemento. Con 3 nodi in due elementi vicini si apre il loro <b>incrocio</b>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="ing">
+  <h2><span class="n">8</span>L'Ingegno: macchine, polvere e alchimia</h2>
+  <p>I personaggi dell'Ingegno usano le stesse regole del Dono (Scambio, triangolo, stamina, tecniche) e possono stare nella stessa squadra. Al posto degli elementi hanno quattro <b>mestieri</b>: Armi, Meccanica, Alchimia e Bionico. Gli incroci tra mestieri vicini sono Tattica, Esplosivi, Medicina e Protesi.</p>
+  <div class="scroll"><table>
+    <thead><tr><th class="row">Attacco ↓ / Difesa →</th><th>✊ Schivata</th><th>✋ Parata</th><th>✌️ Contrattacco</th></tr></thead>
+    <tbody><tr><th class="row">🎯 Sparo</th><td class="R">Retta<br><small>Vinta dietro una copertura</small></td><td class="R">Retta<br><small>Vinta con le carte “anche contro lo Sparo”</small></td><td class="P">Persa</td></tr></tbody></table></div>
+  <div class="grid2">
+    <div class="tile"><b>🎯 Sparo e colpi</b>Le armi da fuoco colpiscono da lontano. Ogni Sparo consuma colpi dal tamburo (6, o 8 con la Cartucciera). A tamburo vuoto il grilletto fa clic: per ricaricare gioca una carta che ha <b>Ricarica</b> nella metà bassa.</div>
+    <div class="tile"><b>Trasmutazioni (Alchimia)</b>Sono carte potenti che <b>si consumano</b>: dopo l'uso non tornano negli scarti. Ognuna alza il <b>Logoramento</b>, e dalla terza in poi ogni Trasmutazione ti costa anche 1d6 PF.</div>
+    <div class="tile"><b>Protesi e Pressione (Bionico)</b>Le carte di protesi alzano la <b>Pressione</b>. Quando arriva al massimo (5) la protesi si <b>surriscalda</b> e nello Scambio dopo non puoi giocarle. Una difesa Persa può danneggiarla (1 volta su 6).</div>
+    <div class="tile"><b>Integrità</b>Chi ha protesi ha anche una riserva di ferro che assorbe i danni prima dei PF. Le carte di <b>riparazione</b> la rimettono a posto, come le cure fanno con i PF.</div>
+    <div class="tile"><b>Automa e torrette (Meccanica)</b>Il Meccanico entra in campo con un <b>automa</b> accanto, che si muove e attacca da solo. Alcune carte piazzano <b>torrette</b> che sparano da sole. Si possono colpire e riparare.</div>
+    <div class="tile"><b>Stati dell'Ingegno</b>Gli stessi effetti del Dono hanno nomi diversi: <i>Sanguina</i> al posto di Brucia, <i>Rallentato</i> al posto di Bagnato, <i>Corroso</i>, <i>Pompato</i>. <i>Inceppato</i> toglie colpi a chi spara.</div>
+  </div>
+  <p class="muted">Il bilanciamento tra Dono e Ingegno è ancora da fare: per ora una delle due parti può risultare più forte.</p>
+</section>
+
+<section>
+  <h2><span class="n">9</span>Come si usa l'app</h2>
+  <ol class="flow">
+    <li><b>Prepara</b>Scegli formato (da 1 contro 1 a 4 contro 4), livello e mappa, poi i personaggi tuoi e dell'IA.</li>
+    <li><b>Fai crescere</b>Per ogni personaggio scegli “Percorso consigliato” oppure “Scelgo io” e prendi un nodo per livello. “Torna indietro” annulla l'ultimo nodo.</li>
+    <li><b>Muovi</b>Tocca la pedina del personaggio (o il suo nome sotto la griglia), poi una casella verde. Toccare di nuovo la pedina annulla il movimento.</li>
+    <li><b>Gioca</b>Tocca una carta della mano e, se serve, il bersaglio (sulla griglia o nei pulsanti). Le carte sbiadite dicono perché non si possono giocare.</li>
+    <li><b>Risolvi</b>Quando sei pronto premi “Risolvi lo Scambio”. Chi non ha una carta scelta lo muove l'IA.</li>
+  </ol>
+</section>
+
+<footer>Le regole sono in fase di prova e i valori possono cambiare tra una versione e l'altra dell'app.</footer>
+</div>
+</body>
+</html>
