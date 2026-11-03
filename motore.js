@@ -215,7 +215,7 @@ function mkF(fz,bi,team,idx,L,scheda){const R=RETI[fz];return conRete(R,()=>{
     fl:2+Math.floor(L/3)+(ids.has('C2')?3:0),draw:deck,hand:[],disc:[],chain:[],post:[],spir:{},spirNext:{},sbil:false,sbilNext:false,burn:0,stx:{},stxNext:{},
     sov:false,has:id=>ids.has(HKm[id]||id),R,fz,stxNomi:{},taken:s.taken,deckList:s.deck,trat:0,prono:0,taunt:null,tauntNext:null,regen:0,rd5:0,bDmg:0,bDmgNext:0,bVel:0,bVelNext:0,first:true,
     forge:ids.has(R.FORGE)&&s.taken.find(t=>t.id===R.FORGE).opt===1,ammo:6+(ids.has('G3')?2:0),ammoMax:6+(ids.has('G3')?2:0),logo:0,press:0,pressMax:ids.has('B15')?7:5,hotUntil:0,protBroken:false,hasPro:s.deck.some(d=>d.c.pr),m10:ids.has('M10')?s.taken.find(t=>t.id==='M10').opt:null,m6:ids.has('M6')?s.taken.find(t=>t.id==='M6').opt:null,b10A:ids.has('B10')&&s.taken.find(t=>t.id==='B10').opt===0,k7A:ids.has('K7')&&s.taken.find(t=>t.id==='K7').opt===0,k7B:ids.has('K7')&&s.taken.find(t=>t.id==='K7').opt===1,gun:s.deck.some(d=>/Sparo/.test(d.c.a||'')),stats:{dmg:0,heal:0,tec:0,spir:0,vinte:0,interr:0,turns:0,low:0,stSum:0,exh:0,moved:0,debt:0}};
-  F.integMax=F.hasPro?3+Math.round(L*(RULES.integK||1)):(F.el==='M'&&RULES.mArm?Math.round(RULES.mArm*(3+L)):0);F.integ=F.integMax;F.pf=F.pfMax;F.st=F.stMax;F.flMax=F.fl;for(let i=0;i<5;i++)F.hand.push(F.draw.pop());return F;});}
+  F.integMax=F.hasPro?3+Math.round(L*(RULES.integK||1)):(F.el==='M'&&RULES.mArm?Math.round(RULES.mArm*(3+L)):0);F.integ=F.integMax;F.pf=F.pfMax;F.st=F.stMax;F.flMax=F.fl;if(RULES.poteri){const seen=new Set();F.poteri=[];F.draw=F.draw.filter(d=>{if(d.c.lv){if(!seen.has(d.c.n)){seen.add(d.c.n);d.potere=true;F.poteri.push(d);}return false;}return true;});}for(let i=0;i<5&&F.draw.length;i++)F.hand.push(F.draw.pop());return F;});}
 function drawCard(F,L){if(!F.draw.length){if(!F.disc.length)return;F.draw=F.disc;F.disc=[];shuffle(F.draw,RND);stLose(F,2);L.push(`${nm(F)} ha finito il mazzo: rimescola gli scarti (−2 stamina).`);}F.hand.push(F.draw.pop());}
 const enemies=(G,F)=>G.fs.filter(o=>o.team!==F.team&&o.pf>0);
 const allies=(G,F)=>G.fs.filter(o=>o.team===F.team&&o.pf>0);
@@ -319,7 +319,7 @@ function ingEnd(G,F,L){const c=F.card.c;
 /* ---- risoluzione ---- */
 function degrade(o){return o==='V'?'R':'P';}
 function* act(G,F,L,arrows){
-  if(F.exh){L.push(`${nm(F)} è <b>Esausto</b> (stamina ${F.st}): gioca <i>${esc(F.card.c.n)}</i> senza pagarla, ma solo per difendersi.`);return;}
+  if(F.fiato){L.push(`${nm(F)} <b>riprende fiato</b>: gioca <i>${esc(F.card.c.n)}</i> solo per difendersi (+2 stamina a fine Scambio).`);return;}if(F.exh){L.push(`${nm(F)} è <b>Esausto</b> (stamina ${F.st}): gioca <i>${esc(F.card.c.n)}</i> senza pagarla, ma solo per difendersi.`);return;}
   const d=F.card,c=d.c,e=fxOf(c),half=F.interr==='half';const ally=allies(G,F),en=enemies(G,F);
   if(e.cat==='zav'){L.push(`${nm(F)} gioca la zavorra <i>${esc(c.n)}</i>: non fa nulla.`);return;}
   if(e.cat==='none'){L.push(`${nm(F)} gioca <i>${esc(c.n)}</i>: effetto non ancora simulato (${esc(c.a)}).`);return;}
@@ -359,7 +359,7 @@ function* act(G,F,L,arrows){
   let parts=[],notes=[],dmg=a.flat,tec=false,burn=false,baseEl=null;if(a.flatTxt)parts.push(a.flatTxt);
   if(a.dice[0]){const x=roll(...a.dice);dmg+=x;parts.push(`${a.dice[0]}d${a.dice[1]}: ${x}`);}
   if(c.lv){tec=true;F.stats.tec++;const vulc=F.has('F15')&&a.fire&&c.lv!=='Suprema';notes.push(`tecnica ${c.lv} (${c.seq})${vulc?' '+F.R.txt.senzaSigilli:''}`);
-    if(c.lv==='Suprema'){F.fl-=3;F.chain=[];notes.push(F.R.txt.suprema);}else if(c.lv==='Avanzata'&&!vulc)F.chain=[];
+    if(c.lv==='Suprema'){F.fl-=3;F.chain=[];notes.push(F.R.txt.suprema);}else if(c.lv==='Avanzata'&&!vulc)F.chain=[];else if(c.lv==='Base'&&RULES.poteri&&!vulc)F.chain.shift();
     if(c.lv==='Avanzata'&&F.has('F7')){F.st=Math.min(F.stMax,F.st+2);notes.push(F.R.txt.danza);}}
   else if(a.base&&(F.chain.length||(F.has('F15')&&a.fire))){tec=true;F.stats.tec++;const x=roll(1,6);dmg+=x;parts.push(`tecnica Base +1d6: ${x}`);burn=a.burn;if(RULES.stati)baseEl=REV[elemOf(F,d)]||elemOf(F,d);}
   if(tec&&a.fire&&F.has('F9')){const x=roll(1,6);dmg+=x;parts.push(`${F.R.txt.combustione}: ${x}`);}
@@ -467,7 +467,7 @@ function* hit0(G,F,T,d,a,e,dmg,o,L,arrows){
 }
 function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.id].ai?manual[F.id]:null;G.manuali=new Set(G.fs.filter(F=>man(F)).map(F=>F.id));
   const L=[],arrows=[];curN=n;const alive=()=>G.fs.filter(f=>f.pf>0);
-  alive().forEach(F=>{F.spUsed=false;F.slan=F.slanNext||0;F.slanNext=0;if(RULES.spExp&&F.spAge)for(const k in F.spir)if(F.spAge[k]<n-1){delete F.spir[k];}if(n>1){if(F.noRec){F.noRec=false;if(RULES.fulm==='mezzo')F.st+=1;}else F.st=Math.min(F.stMax,F.st+RULES.stRec);}F.debtNow=false;F.exh=false;if(F.adoUsed&&F.adoUsed<n)F.adoUsed=0;F.sbil=F.sbilNext;F.sbilNext=false;Object.assign(F.spir,F.spirNext);F.spirNext={};
+  alive().forEach(F=>{F.spUsed=false;F.slan=F.slanNext||0;F.slanNext=0;if(RULES.spExp&&F.spAge)for(const k in F.spir)if(F.spAge[k]<n-1){delete F.spir[k];}if(n>1){if(F.noRec){F.noRec=false;if(RULES.fulm==='mezzo')F.st+=1;}else F.st=Math.min(F.stMax,F.st+RULES.stRec);}F.debtNow=false;F.exh=false;F.fiato=false;if(F.adoUsed&&F.adoUsed<n)F.adoUsed=0;F.sbil=F.sbilNext;F.sbilNext=false;Object.assign(F.spir,F.spirNext);F.spirNext={};
     F.stx=F.stxNext;F.stxNext={};F.bDmg=F.bDmgNext;F.bDmgNext=0;F.bVel=F.bVelNext;F.bVelNext=0;F.taunt=F.tauntNext;F.tauntNext=null;
     F.defCount=0;F.rdTmp=0;F.movedNow=0;F.x3=false;F.acted=false;F.interr=null;F.card=null;F.tgt=null;F.vel=0;});
   const moves=[];const sp0=new Map(G.fs.map(F=>[F.id,{...F.spir,...F.spirNext}]));
@@ -476,13 +476,13 @@ function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.i
     if(s&&RULES.ado&&!(RULES.v4ado&&F.has('V4')))adj0.filter(o=>o.pf>0&&dist(F,o)>1&&!(o.trat>0||o.prono>0||o.sbil)&&!o.adoUsed).forEach(o=>{o.adoUsed=n;const v=3+Math.max(o.mod.SAG,o.mod.DES,o.mod.FOR,o.mod.INT||0),x=Math.max(0,v-rdOf(F));hurt(F,x);o.stats.dmg+=x;o.stats.ado=(o.stats.ado||0)+1;L.push(`${nm(o)} colpisce ${nm(F)} che si disimpegna senza Schivata né Aggiramento: <b>attacco di opportunità</b>, ${x} danni.`);arrows.push({a:[o.x,o.y],b:[F.x,F.y],team:o.team,kind:'atk',out:'P'});});
     if(s){moves.push({a:[fx,fy],b:[F.x,F.y],team:F.team});L.push(`${nm(F)} ${F.lastDash?'scatta':'si muove'} di ${s} ${s===1?'casella':'caselle'} (−${F.lastCost} stamina${F.lastCost<s?(F.el==='V'?', passi leggeri del vento':F.el==='M'?', molle ai piedi':(F.fz==='dono'?', Vento che Attizza':'')):''}).`);}});
   const acts=alive();
-  acts.forEach(F=>{if(F.isPet){F.card=null;F.adj=[];F.vel=F.pvel-(F.stx.A?1:0)-(F.trat>0?2:0);return;}F.stats.turns++;F.stats.stSum+=F.st;if(F.st<=2)F.stats.low++;let ch=man(F)?pickManual(G,F,man(F)):choose(G,F);
-    if(!ch.d&&F.hand.length){const d=F.hand.filter(x=>defInfo(x)).sort((a,b)=>velOf(F,b)-velOf(F,a))[0]||F.hand[0];ch={d,t:null};F.exh=true;F.stats.exh++;}
-    if(ch.d){F.hand.splice(F.hand.indexOf(ch.d),1);if(!F.exh){const k=costOf(ch.d,F);if(k>F.st){F.stats.debt++;F.debtNow=true;if(RULES.fulm==='scarica'){const x=2*(k-Math.max(0,F.st));F.pf-=x;F.stats.selfDmg=(F.stats.selfDmg||0)+x;L.push(`${nm(F)} va in Sovraccarico: la scarica gli costa ${x} PF.`);}}F.st-=k;if(F.st<0&&(RULES.fulm==='pieno'||RULES.fulm==='mezzo'))F.noRec=true;}F.card=ch.d;F.tgt=ch.t;F.vel=velOf(F,ch.d);{const gm=(ch.d.c.b||'').match(/Guardiano per (\d)/);if(gm&&RULES.guard){F.guard=n+(+gm[1])-1;L.push(`${nm(F)} si mette di Guardia: per ${gm[1]} scambi difende gli alleati adiacenti.`);}}
+  acts.forEach(F=>{if(F.isPet){F.card=null;F.adj=[];F.vel=F.pvel-(F.stx.A?1:0)-(F.trat>0?2:0);return;}F.stats.turns++;F.stats.stSum+=F.st;if(F.st<=2)F.stats.low++;const h0=F.hand;if(RULES.poteri&&F.poteri)F.hand=[...h0,...F.poteri.filter(d=>tecReady(F,d)&&(d.c.lv!=='Suprema'||F.fl>=3))];let ch=man(F)?pickManual(G,F,man(F)):choose(G,F);F.hand=h0;if(RULES.fiato&&!man(F)&&F.hand.length&&(!ch.d||(F.st<=2&&costOf(ch.d,F)>=F.st))){ch={d:F.hand.filter(x=>defInfo(x)).sort((a,b)=>velOf(F,b)-velOf(F,a))[0]||F.hand[0],t:null,fiato:true};}
+    if(ch.fiato&&ch.d){F.exh=true;F.fiato=true;F.stats.fiato=(F.stats.fiato||0)+1;}else if(!ch.d&&F.hand.length){const d=F.hand.filter(x=>defInfo(x)).sort((a,b)=>velOf(F,b)-velOf(F,a))[0]||F.hand[0];ch={d,t:null};F.exh=true;F.stats.exh++;}
+    if(ch.d){if(!ch.d.potere)F.hand.splice(F.hand.indexOf(ch.d),1);if(!F.exh){const k=costOf(ch.d,F);if(k>F.st){F.stats.debt++;F.debtNow=true;if(RULES.fulm==='scarica'){const x=2*(k-Math.max(0,F.st));F.pf-=x;F.stats.selfDmg=(F.stats.selfDmg||0)+x;L.push(`${nm(F)} va in Sovraccarico: la scarica gli costa ${x} PF.`);}}F.st-=k;if(F.st<0&&(RULES.fulm==='pieno'||RULES.fulm==='mezzo'))F.noRec=true;}F.card=ch.d;F.tgt=ch.t;F.vel=velOf(F,ch.d);{const gm=(ch.d.c.b||'').match(/Guardiano per (\d)/);if(gm&&RULES.guard){F.guard=n+(+gm[1])-1;L.push(`${nm(F)} si mette di Guardia: per ${gm[1]} scambi difende gli alleati adiacenti.`);}}
       const adj=[];if(RULES.stati){if(F.stx.L){F.vel--;adj.push('Elettrizzato −1');}if(F.stx.A){F.vel--;adj.push(nomeStato(F,'A')+' −1');}if(F.stx.V){F.vel++;adj.push(nomeStato(F,'V')+' +1');}}
       if(F.trat>0){F.vel-=2;adj.push('Trattenuto −2');}if(F.prono>0){F.vel-=2;adj.push('Prono −2');}if(F.bVel){F.vel+=F.bVel;adj.push('Riflessi +'+F.bVel);}if(F.slan){F.vel+=F.slan;adj.push('Impeto +'+F.slan);}
       F.adj=adj;}else F.adj=[];});
-  const cards=acts.filter(F=>!F.isPet).map(F=>({id:F.id,name:F.name,team:F.team,card:F.card,vel:F.vel,adj:F.exh?[...F.adj,'Esausto: solo difesa']:F.debtNow?[...F.adj,'Sovraccarico: va in debito']:F.adj,tgt:F.tgt?F.tgt.name:null,cost:F.card&&!F.exh?costOf(F.card,F):0}));
+  const cards=acts.filter(F=>!F.isPet).map(F=>({id:F.id,name:F.name,team:F.team,card:F.card,vel:F.vel,adj:F.exh?[...F.adj,F.fiato?'Riprende fiato: solo difesa, +2 stamina':'Esausto: solo difesa']:F.debtNow?[...F.adj,'Sovraccarico: va in debito']:F.adj,tgt:F.tgt?F.tgt.name:null,cost:F.card&&!F.exh?costOf(F.card,F):0}));
   const pos=snap(G);
   acts.sort((a,b)=>b.vel-a.vel);
   const groups=[];acts.forEach(F=>{const g=groups[groups.length-1];if(g&&g[0].vel===F.vel)g.push(F);else groups.push([F]);});
@@ -494,14 +494,14 @@ function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.i
   // Spiragli incrociati nello stesso scambio (ancora non usati) si annullano
   if(RULES.spirCancel)G.fs.forEach(F=>G.fs.forEach(O=>{if(F.id>=O.id||F.team===O.team)return;const fNew=(F.spir[O.id]||F.spirNext[O.id])&&!sp0.get(F.id)[O.id],oNew=(O.spir[F.id]||O.spirNext[F.id])&&!sp0.get(O.id)[F.id];
     if(fNew&&oNew){delete F.spir[O.id];delete F.spirNext[O.id];delete O.spir[F.id];delete O.spirNext[F.id];L.push(`${nm(F)} e ${nm(O)} si sono aperti un varco a vicenda nello stesso scambio: i due <b>Spiragli si annullano</b>.`);}}));
-  G.fs.forEach(F=>{if(F.card){if(!F.card.c.post&&!(F.card.c.tr&&!F.has('K15')&&!F.exh))F.disc.push(F.card);ingEnd(G,F,L);if(F.card.c.s&&!F.card.c.lv){F.chain.push(F.card.c.s==='del tuo elemento'?'Jolly':F.card.c.s);if(F.chain.length>3)F.chain.shift();}
+  G.fs.forEach(F=>{if(F.card){if(!F.card.potere&&!F.card.c.post&&!(F.card.c.tr&&!F.has('K15')&&!F.exh))F.disc.push(F.card);ingEnd(G,F,L);if(F.card.c.s&&!F.card.c.lv){F.chain.push(F.card.c.s==='del tuo elemento'?'Jolly':F.card.c.s);if(F.chain.length>3)F.chain.shift();}
       if(F.has('C7')&&fxOf(F.card.c).cat!=='atk')F.fl=Math.min(F.flMax,F.fl+1);}
     if(F.isPet){if(F.pf<=0&&F.owner.has('M15')&&!F.rebuilt&&F.owner.pf>0){F.rebuilt=true;F.pf=Math.floor(F.pfMax/2);L.push(`Fabbrica da Campo: ${nm(F)} si ricostruisce (${F.pf}).`);}
       if(F.pf>0&&F.kind==='automa'&&F.owner.m6===0)enemies(G,F).filter(o=>dist(o,F)<=1&&!o.isPet).forEach(o=>o.tauntNext=F.id);
       F.burn=0;if(F.trat>0)F.trat--;if(F.prono>0)F.prono--;return;}
     if(F.pf<=0)return;
     if(F.burn>0){const fan=RULES.burnFan&&F.movedNow>=2,x=(RULES.burnT==='base'?2:RULES.burnT==='dot3'?roll(1,4):roll(1,4)+1)+(F.burnHot?1:0)+(fan?RULES.fanN:0);F.pf-=x;F.burn--;L.push(`${nm(F)} ${F.burnNome||'Brucia'}: −${x} PF${F.burnHot?' (Sangue Caldo)':''}${fan?((F.burnNome||'Brucia')==='Brucia'?' (si è mosso e ha alimentato le fiamme)':' (si è mosso e la ferita si è riaperta)'):''}.`);}
-    if(F.regen>0){const x=roll(1,6);F.pf=Math.min(F.pfMax,F.pf+x);F.regen--;L.push(`${nm(F)} è curato dalle Radici: +${x}.`);}
+    if(F.fiato)F.st=Math.min(F.stMax,F.st+2);if(F.regen>0){const x=roll(1,6);F.pf=Math.min(F.pfMax,F.pf+x);F.regen--;L.push(`${nm(F)} è curato dalle Radici: +${x}.`);}
     if(F.trat>0)F.trat--;if(F.lega>0)F.lega--;if(F.prono>0)F.prono--;if(F.rd5>0)F.rd5--;
     const z=F.hand.find(d=>d.c.zav);if(z&&F.st>=1){F.hand.splice(F.hand.indexOf(z),1);F.disc.push(z);F.st-=1;L.push(`${nm(F)} scarta la zavorra <i>${esc(z.c.n)}</i> (−1 stamina).`);}
     drawCard(F,L);});
@@ -534,6 +534,8 @@ function runFight(cfg,seed,lvl){
    - Poi il movimento riprende per tutti; si ripete finché i movimenti non finiscono.
    - Scavalcare una cassa costa 1 stamina in più (non ci si può fermare sopra; i muri non si scavalcano). */
 RULES.movSim=true;
+RULES.fiato=true;   // Riprendere fiato: una carta giocata solo per difendersi, +2 stamina a fine Scambio
+RULES.poteri=false; // in prova: le tecniche escono dal mazzo e diventano poteri (Base 1 simbolo, Avanzata 2, Suprema 3)
 const freeVOf=F=>F.el==='V'?2:0;
 const occupata=(G,x,y,self)=>G.fs.some(f=>f!==self&&f.pf>0&&f.x===x&&f.y===y);
 // caselle raggiungibili: Map chiave -> {s: caselle, c: stamina, path: [[x,y],...]}
@@ -620,7 +622,7 @@ function* sceltaRipos(G,M,O,r,mode,arrows,kind){
 
 /* ===================== API PER L'APP: partita manuale =====================
    const G = nuovaPartita({map:'casse', A:[{fz:'dono',bi:0,L:5,scheda?}, {fz:'ingegno',bi:3,L:5}], B:[...]});
-   piani[F.id] = {move:[x,y]|null, ci:indice in F.hand|null, t:id bersaglio|null}  oppure {ai:true}
+   piani[F.id] = {move:[x,y]|null, ci:indice in F.hand|null, t:id bersaglio|null, fiato?:true (la carta serve solo a difendersi, +2 stamina)}  oppure {ai:true}
    (automi e torrette, F.isPet, giocano sempre da soli: non servono piani)
    const ris = risolviScambio(G, piani);  -> {lines, cards, moves, arrows, pos, end};  G.over = null|'A'|'B'|'pari'
    Con il movimento simultaneo, se un personaggio comandato a mano entra in collisione, risolviScambio restituisce
@@ -634,7 +636,7 @@ function applyMove(G,F,mv,L){F.lastCost=0;F.lastDash=false;if(!mv||F.trat>0||F.l
   const R=reachFor(G,F,F.st),steps=R.get(key(mv[0],mv[1]));
   if(steps==null){L.push(`${nm(F)} non riesce più a raggiungere la casella scelta (occupata o fuori portata) e resta fermo.`);return 0;}
   const cost=Math.max(0,steps-freeVOf(F));if(!steps||cost>F.st)return 0;F.st-=cost;F.lastCost=cost;F.x=mv[0];F.y=mv[1];return steps;}
-function pickManual(G,F,p){if(p.ci==null)return{d:null,t:null};const d=F.hand[p.ci];if(!d||costOf(d,F)>F.st||!proOk(F,d,curN))return{d:null,t:null};
+function pickManual(G,F,p){if(p.fiato&&p.ci!=null&&F.hand[p.ci])return{d:F.hand[p.ci],t:null,fiato:true};if(p.ci==null)return{d:null,t:null};const d=F.hand[p.ci];if(!d||costOf(d,F)>F.st||!proOk(F,d,curN))return{d:null,t:null};
   let t=p.t?G.fs.find(o=>o.id===p.t)||null:null;const e=fxOf(d.c);if(e.cat==='heal'&&!t)t=F;return{d,t};}
 const umani=G=>G.fs.filter(F=>!F.isPet);
 function nuovaPartita(cfg){RND=Math.random;curN=1;const G={obs:new Map(MAPS[cfg.map].obs.map(([x,y,t])=>[key(x,y),t])),fs:[],map:cfg.map,n:0,over:null},ys=[4,2,6,0,8];

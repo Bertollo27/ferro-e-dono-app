@@ -6,7 +6,7 @@
    ============================================================ */
 (()=>{
 'use strict';
-const VERSIONE='0.3 · fase 1';
+const VERSIONE='0.4 · fase 1';
 const $app=document.getElementById('app');
 const E=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -223,7 +223,7 @@ function freccia(a,b,col,C,dash){if(a[0]===b[0]&&a[1]===b[1])return '';const m=c
   return `<line class="g-freccia" x1="${a[0]*C+C/2}" y1="${a[1]*C+C/2}" x2="${b[0]*C+C/2}" y2="${b[1]*C+C/2}" stroke="${col}" ${dash?`stroke-dasharray="${dash}"`:''} marker-end="url(#pt${m})" pointer-events="none"/>`;}
 
 function vCarta(F,d,i,p){
-  const c=d.c,mot=motivoCartaNonGiocabile(S.G,F,d,p.move),scelta=p.ci===i,fz=F.fz;
+  const c=d.c,mot=p.fiato?'':motivoCartaNonGiocabile(S.G,F,d,p.move),scelta=p.ci===i,fz=F.fz;
   let piede='';
   if(c.zav)piede='Zavorra';
   else if(c.lv)piede=`Tecnica ${E(c.lv)}${c.seq?' · '+E(c.seq):''}${c.lv==='Suprema'?' · 3 '+E(parola(fz,'flusso')):''}`;
@@ -256,14 +256,16 @@ function vScontro(){
   if(F&&!ia){
     ragg=caselleRaggiungibili(G,F);
     const d=p.ci!=null?F.hand[p.ci]:null;
-    if(d)bers=bersagliCarta(G,F,d,p.move);
-    const resto=stPlan(G,F)-costoMovimento(G,F,p.move)-(d?costOf(d,F):0);
+    if(d&&!p.fiato)bers=bersagliCarta(G,F,d,p.move);
+    const resto=stPlan(G,F)-costoMovimento(G,F,p.move)-(d&&!p.fiato?costOf(d,F):0);
     let riga='';
     if(d&&bers){if(bers.kind==='auto')riga=`<p class="piccolo tenue">Bersaglio: ${E(bers.txt)}</p>`;
       else if(!bers.list.length)riga=`<p class="avviso">Nessun ${bers.kind==='atk'?'nemico':'alleato'} a portata ${p.move?'dalla casella scelta':'da qui'}: la carta servirà solo a difenderti.</p>`;
       else riga=`<div class="riga"><span class="piccolo tenue">Bersaglio:</span>${bers.list.map(o=>`<button class="btn piccolo${p.t===o.id?' scelto':''}" data-act="bersaglio" data-id="${o.id}"><span class="t${o.team}">${E(o.name)}</span> ${Math.max(0,o.pf)}PF</button>`).join('')}</div>`;}
     pannello=`${infoPg(F)}
-      <div class="riga piccolo"><span>${p.move?`Movimento: ${costoMovimento(G,F,p.move)} stamina`:'Tocca una casella verde per muoverti (o resta fermo)'}</span><span class="spazio"></span><span class="num">resta ${resto}</span></div>
+      <div class="riga piccolo"><span>${p.move?`Movimento: ${costoMovimento(G,F,p.move)} stamina`:'Tocca una casella verde per muoverti (o resta fermo)'}</span><span class="spazio"></span><span class="num">resta ${resto}${p.fiato?' (+2 a fine Scambio)':''}</span></div>
+      <div class="segmenti" role="group" aria-label="Cosa fai con la carta"><button data-act="fiato" data-v="0" aria-pressed="${!p.fiato}">Agisci</button><button data-act="fiato" data-v="1" aria-pressed="${!!p.fiato}">Riprendi fiato</button></div>
+      ${p.fiato?'<p class="piccolo tenue">Scegli la carta con cui difenderti: non la paghi e non attacchi, ma a fine Scambio recuperi 2 stamina in più.</p>':''}
       <div class="mano" role="listbox" aria-label="Carte in mano">${F.hand.map((d,i)=>vCarta(F,d,i,p)).join('')}</div>
       ${riga}`;
   }else if(F&&ia){pannello=`${infoPg(F)}<p class="avviso">Questo personaggio lo muove l'IA. Togli la spunta per tornare a comandarlo.</p>`;}
@@ -354,14 +356,14 @@ function risolvi(){
   const G=S.G,piani={};
   G.fs.forEach(F=>{if(F.isPet||F.pf<=0)return;
     if(F.team==='B'||S.ia[F.id]){piani[F.id]={ai:true};return;}
-    const p=S.piani[F.id];piani[F.id]=p&&p.ci!=null?{move:p.move,ci:p.ci,t:p.t}:{ai:true};});
+    const p=S.piani[F.id];piani[F.id]=p&&p.ci!=null?{move:p.move,ci:p.ci,t:p.fiato?null:p.t,fiato:!!p.fiato}:{ai:true};});
   S.piani={};dopoPasso(risolviScambio(G,piani));
 }
 function dopoPasso(r){
   if(r.attesa){S.foglio={tipo:r.attesa.tipo,chi:r.attesa.chi,scelte:{}};return;}
   S.ultimo=r;S.foglio={tipo:'scambio',ris:r};if(S.G.over)salvaRegistro();
 }
-function rivalidaCarta(F){const p=piano(F.id);if(p.ci==null)return;const d=F.hand[p.ci];
+function rivalidaCarta(F){const p=piano(F.id);if(p.ci==null||p.fiato)return;const d=F.hand[p.ci];
   if(!d||motivoCartaNonGiocabile(S.G,F,d,p.move)){p.ci=null;p.t=null;return;}
   const b=bersagliCarta(S.G,F,d,p.move);if(!b.list){p.t=null;return;}
   if(!b.list.some(o=>o.id===p.t))p.t=b.list.length===1?b.list[0].id:null;}
@@ -395,8 +397,9 @@ const AZ={
   mazzo:()=>{S.foglio={tipo:'mazzo'};},
   inizia:()=>{if(Array.from({length:S.cfg.n},(_,i)=>prontaC(S.cresc[i])).every(Boolean))avviaPartita();},
   pg:el=>{S.attivo=el.dataset.id;},
+  fiato:el=>{const F=personaggio(S.G,S.attivo),p=piano(F.id);p.fiato=el.dataset.v==='1';p.t=null;if(!p.fiato&&p.ci!=null&&motivoCartaNonGiocabile(S.G,F,F.hand[p.ci],p.move))p.ci=null;else if(!p.fiato)rivalidaCarta(F);},
   carta:el=>{const F=personaggio(S.G,S.attivo),p=piano(F.id),i=+el.dataset.i;
-    if(p.ci===i){p.ci=null;p.t=null;return;}const d=F.hand[i];if(motivoCartaNonGiocabile(S.G,F,d,p.move))return;
+    if(p.ci===i){p.ci=null;p.t=null;return;}const d=F.hand[i];if(p.fiato){p.ci=i;p.t=null;return;}if(motivoCartaNonGiocabile(S.G,F,d,p.move))return;
     p.ci=i;p.t=null;const b=bersagliCarta(S.G,F,d,p.move);if(b.list&&b.list.length===1)p.t=b.list[0].id;},
   bersaglio:el=>{const p=piano(S.attivo);p.t=p.t===el.dataset.id?null:el.dataset.id;},
   cella:el=>{const F=personaggio(S.G,S.attivo);if(!F||S.ia[F.id]||F.pf<=0)return;const x=+el.dataset.x,y=+el.dataset.y,p=piano(F.id);

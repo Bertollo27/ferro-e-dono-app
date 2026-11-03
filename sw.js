@@ -2,7 +2,7 @@
    Regole e dati (dati-*.js, motore.js, app.js) si prendono prima dalla rete,
    così un aggiornamento del bilanciamento arriva subito; il resto dalla cache.
    Cambia VERSIONE quando cambi l'elenco dei file. */
-const VERSIONE='fd-v3';
+const VERSIONE='fd-v4';
 const FILE=['./','index.html','guida.html','stile.css','app.js','motore.js','dati-dono.js','dati-ingegno.js','manifest.webmanifest','icone/icona-192.png','icone/icona-512.png'];
 const PRIMA_RETE=/(dati-[a-z]+|motore|app)\.js$|\/$|index\.html$/;
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSIONE).then(c=>c.addAll(FILE)).then(()=>self.skipWaiting()));});
