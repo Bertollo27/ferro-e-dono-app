@@ -148,6 +148,16 @@ select{min-height:44px;padding:8px;border-radius:10px;border:1px solid var(--lin
 .foglio .dentro{background:var(--sfondo);width:100%;max-width:760px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:12px}
 .tA{color:var(--squadra-A)} .tB{color:var(--squadra-B)}
 
+/* ---------- Risoluzione passo per passo ---------- */
+.duello{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.duello .carta{flex:none;width:auto;cursor:default}
+.carta .meta.attiva{background:var(--morbido);box-shadow:inset 3px 0 0 var(--ottone)}
+.carta .meta.spenta{opacity:.4}
+.passo-testo{font-size:15px;line-height:1.5;min-height:3em}
+.passo-testo b.tA,.riquadro b.tA{color:var(--squadra-A)} .passo-testo b.tB,.riquadro b.tB{color:var(--squadra-B)}
+details.riquadro summary{cursor:pointer;font-weight:600;min-height:32px}
+details.riquadro .registro{margin-top:8px}
+
 /* ---------- Guida e registro partite ---------- */
 .tabella{width:100%;border-collapse:collapse;font-size:13px}
 .tabella td,.tabella th{border-bottom:1px solid var(--linea);padding:6px 4px;text-align:left}

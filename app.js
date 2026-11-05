@@ -6,7 +6,7 @@
    ============================================================ */
 (()=>{
 'use strict';
-const VERSIONE='0.4 · fase 1';
+const VERSIONE='0.5 · fase 1';
 const $app=document.getElementById('app');
 const E=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -41,10 +41,11 @@ const salvaCfg=()=>mem.set('fd-cfg',S.cfg);
    ============================================================ */
 function render(){
   const mano=$app.querySelector('.mano'),sx=mano?mano.scrollLeft:0,sy=window.scrollY,stesso=$app.dataset.schermo===S.schermo;
-  const f={home:vHome,prep:vPrep,cresc:vCresc,scontro:vScontro,fine:vFine,registro:vRegistro}[S.schermo];
+  const f={home:vHome,prep:vPrep,cresc:vCresc,scontro:vScontro,fine:vFine,registro:vRegistro,replay:vReplay}[S.schermo];
   $app.dataset.schermo=S.schermo;
   $app.innerHTML=f()+(S.foglio?vFoglio():'');
   if(stesso){window.scrollTo(0,sy);const m2=$app.querySelector('.mano');if(m2)m2.scrollLeft=sx;}else window.scrollTo(0,0);
+  if(S.schermo==='replay'){$app.querySelectorAll('animateTransform').forEach(a=>{try{a.beginElement();}catch(e){}});S.replay.anima=false;}
 }
 const barra=html=>`<div class="barra-fondo"><div class="dentro">${html}</div></div>`;
 const btn=(act,txt,cls='',extra='')=>`<button class="btn ${cls}" data-act="${act}" ${extra}>${txt}</button>`;
@@ -281,6 +282,77 @@ function vScontro(){
   </div>${barra(btn('risolvi',nonDecisi.length?`Risolvi (${nonDecisi.map(o=>E(o.name)).join(', ')}: decide l'IA)`:'Risolvi lo Scambio','primario'))}`;
 }
 
+
+/* ---------- RISOLUZIONE DELLO SCAMBIO, passo per passo sul campo ---------- */
+function costruisciFotogrammi(r){
+  const P=r.passi||[],F=[];let i=0;
+  const inizio=P[0];F.push({tipo:'inizio',snaps:[inizio.snap],frecce:[0,0],righe:[]});
+  // movimento: dai passi fino al segnale 'azioni'
+  const mov={tipo:'mov',snaps:[inizio.snap],righe:[],frecce:[0,0]};i=1;
+  while(i<P.length&&P[i].tipo!=='azioni'){const p=P[i];if(p.tipo==='passo')mov.snaps.push(p.snap);else if(p.tipo==='riga'){mov.righe.push(p.testo);mov.ultima=p.snap;}mov.frecce[1]=p.frecce;i++;}
+  const az=P[i];mov.snaps.push(az?az.snap:(mov.ultima||inizio.snap));F.push(mov);
+  let fr=mov.frecce[1];i++;
+  // azioni: una riga alla volta
+  while(i<P.length&&P[i].tipo!=='fine'){const p=P[i];if(p.tipo==='riga'){F.push({tipo:'azione',snaps:[F[F.length-1].snaps.slice(-1)[0],p.snap],righe:[p.testo],att:p.att,dif:p.dif,frecce:[fr,p.frecce]});fr=p.frecce;}i++;}
+  // fine dello Scambio: tutto insieme
+  const fine={tipo:'fine',snaps:[F[F.length-1].snaps.slice(-1)[0]],righe:[],frecce:[fr,fr]};i++;
+  while(i<P.length){const p=P[i];if(p.tipo==='riga'){fine.righe.push(p.testo);fine.snaps[1]=p.snap;}i++;}
+  if(fine.righe.length)F.push(fine);
+  return F;
+}
+function apriReplay(r){S.replay={ris:r,fot:costruisciFotogrammi(r),i:0,k:0};S.schermo='replay';}
+function vaiFotogramma(i){const R=S.replay;R.i=Math.max(0,Math.min(R.fot.length-1,i));const f=R.fot[R.i];clearTimeout(R.timer);
+  R.k=f.snaps.length>1?1:0;R.anima=true;
+  if(f.snaps.length>2){const passo=()=>{R.timer=setTimeout(()=>{if(S.schermo!=='replay'||R.fot[R.i]!==f)return;if(R.k<f.snaps.length-1){R.k++;render();passo();}},320);};passo();}}
+const sigleS=o=>o.pet?(o.pet==='torretta'?'T':'⚙'):o.name.replace(/[^A-Za-zÀ-ú0-9 ]/g,'').split(' ').map((w,i)=>i?w.replace(/\D/g,''):w.slice(0,2)).join('');
+function vCampo(snap,prima,frecce,evid){
+  const G=S.G,C=36,parts=[];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const o=G.obs.get(key(x,y));parts.push(`<rect class="g-cella" x="${x*C}" y="${y*C}" width="${C}" height="${C}"/>`);
+    if(o)parts.push(`<rect class="${o==='m'?'g-muro':'g-cassa'}" x="${x*C+(o==='m'?0:4)}" y="${y*C+(o==='m'?0:4)}" width="${o==='m'?C:C-8}" height="${o==='m'?C:C-8}" rx="${o==='m'?0:3}"/>`);}
+  frecce.forEach(a=>parts.push(freccia(a.a,a.b,a.kind==='heal'||a.kind==='repair'?'var(--vinta)':colSq(a.team),C,a.kind==='move'||a.kind==='push'?'4 4':'')));
+  const pm=new Map((prima||[]).map(o=>[o.id,o]));
+  snap.forEach(o=>{const vivo=o.pf>0,q=pm.get(o.id),cx=o.x*C+C/2,cy=o.y*C+C/2,r=o.pet?11:14,fr=Math.max(0,o.pf)/o.pfMax;
+    if(!vivo&&!(q&&q.pf>0))return;
+    const anim=q&&(q.x!==o.x||q.y!==o.y)&&S.replay.anima?`<animateTransform attributeName="transform" type="translate" from="${(q.x-o.x)*C} ${(q.y-o.y)*C}" to="0 0" dur="0.28s" fill="freeze" begin="indefinite"/>`:'';
+    parts.push(`<g class="g-pedina${vivo?'':' g-fantasma'}" data-act="pedina-r" data-id="${o.id}">${anim}
+      ${evid.att===o.id?`<circle class="g-scelto" cx="${cx}" cy="${cy}" r="${r+3}"/>`:''}${evid.dif===o.id?`<circle class="g-bersaglio scelto" cx="${cx}" cy="${cy}" r="${r+4}"/>`:''}
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="${colSq(o.team)}" stroke="var(--el-${o.el})" stroke-width="3"/>
+      <text x="${cx}" y="${cy-1}">${vivo?E(sigleS(o)):'✕'}</text>
+      <rect class="g-pf-fondo" x="${o.x*C+4}" y="${o.y*C+C-6}" width="${C-8}" height="4" rx="2"/>
+      <rect x="${o.x*C+4}" y="${o.y*C+C-6}" width="${(C-8)*fr}" height="4" rx="2" fill="${fr>.5?'var(--vinta)':fr>.25?'var(--retta)':'var(--persa)'}"/></g>`);});
+  return `<svg class="griglia" viewBox="0 0 ${W*C} ${H*C}" role="img" aria-label="Campo di battaglia">
+    <defs>${['A','B'].map(t=>`<marker id="pt${t}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${colSq(t)}"/></marker>`).join('')}<marker id="ptC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--vinta)"/></marker></defs>
+    ${parts.join('')}</svg>`;
+}
+function cartaDuello(cc,meta){// cc = voce di ris.cards; meta = 'a' (attacca con la metà alta) o 'b' (difende con la metà bassa)
+  if(!cc||!cc.card)return '';const c=cc.card.c;
+  return `<div class="carta duello-carta"><div class="testa"><b>${E(c.n)}</b><span class="num">⚡${cc.vel}</span></div>
+    ${c.a?`<div class="meta ${meta==='a'?'attiva':'spenta'}"><small>${c.b?'Attacco':'Effetto'} · <span class="t${cc.team}">${E(cc.name)}</span></small>${rpsIco(c.a)} ${E(c.a)}</div>`:''}
+    ${c.b?`<div class="meta ${meta==='b'?'attiva':'spenta'}"><small>Difesa · <span class="t${cc.team}">${E(cc.name)}</span></small>${rpsIco(c.b)} ${E(c.b)}</div>`:''}</div>`;
+}
+function vReplay(){
+  const R=S.replay,r=R.ris,f=R.fot[R.i],ultimo=R.i===R.fot.length-1;
+  const snap=f.snaps[R.k],prima=f.snaps.length>1?f.snaps[R.k-1]:null;
+  const nuove=r.arrows.slice(f.frecce[0],f.frecce[1]);
+  if(f.tipo==='mov'&&R.k===f.snaps.length-1)r.moves.forEach(m=>nuove.push({a:m.a,b:m.b,team:m.team,kind:'move'}));
+  const evid={att:f.att,dif:f.dif};
+  let pannello='';
+  if(f.tipo==='inizio'){const cs=[...r.cards].sort((a,b)=>b.vel-a.vel);
+    pannello=`<p class="passo-testo">Tutti hanno scelto: le carte si scoprono. Agisce prima chi ha più Velocità.</p>
+      <div class="rivelate">${cs.map(c=>`<div class="rivelata"><span class="vel">${c.vel}</span><div><b class="t${c.team}">${E(c.name)}</b> ${c.card?`<i>${E(c.card.c.n)}</i>`:'nessuna carta'}${c.tgt?` → ${E(c.tgt)}`:''}${c.adj&&c.adj.length?`<br><span class="piccolo tenue">${E(c.adj.join(' · '))}</span>`:''}</div></div>`).join('')}</div>`;}
+  else if(f.tipo==='mov'){pannello=`<h3>Movimento</h3>${f.righe.length?`<ol class="registro">${f.righe.map(l=>`<li>${l}</li>`).join('')}</ol>`:'<p class="passo-testo">Nessuno si muove.</p>'}`;}
+  else if(f.tipo==='azione'){const ca=r.cards.find(c=>c.id===f.att),cd=f.dif&&f.dif!==f.att?r.cards.find(c=>c.id===f.dif):null;
+    const duello=ca&&ca.card?`<div class="duello">${cartaDuello(ca,'a')}${cd&&cd.card?cartaDuello(cd,'b'):''}</div>`:'';
+    pannello=`${duello}<p class="passo-testo">${f.righe[0]}</p>`;}
+  else pannello=`<h3>Fine dello Scambio</h3><ol class="registro">${f.righe.map(l=>`<li>${l}</li>`).join('')}</ol>`;
+  return `<div class="pila" style="gap:10px">
+    <div class="riga"><b>Scambio ${r.n}</b><span class="tenue piccolo">passo ${R.i+1} di ${R.fot.length}</span><span class="spazio"></span>${btn('replay-fine','Salta alla fine','piccolo',ultimo?'disabled':'')}</div>
+    ${vCampo(snap,prima,nuove,evid)}
+    <div class="riquadro pila" style="gap:8px">${pannello}</div>
+    <details class="riquadro"><summary>Tutto il racconto dello Scambio</summary><ol class="registro">${r.lines.map(l=>`<li>${l}</li>`).join('')}</ol></details>
+  </div>${barra(btn('replay-indietro','‹ Indietro','',R.i===0?'disabled':'')+(ultimo?btn('replay-chiudi',S.G.over?'Vedi il risultato':'Prossimo Scambio','primario'):btn('replay-avanti','Avanti ›','primario')))}`;
+}
+
 /* ---------- FOGLI (pannelli dal basso) ---------- */
 function vFoglio(){
   const f=S.foglio;let html='';
@@ -361,7 +433,7 @@ function risolvi(){
 }
 function dopoPasso(r){
   if(r.attesa){S.foglio={tipo:r.attesa.tipo,chi:r.attesa.chi,scelte:{}};return;}
-  S.ultimo=r;S.foglio={tipo:'scambio',ris:r};if(S.G.over)salvaRegistro();
+  S.ultimo=r;if(S.G.over)salvaRegistro();if(r.passi){S.foglio=null;apriReplay(r);vaiFotogramma(0);}else S.foglio={tipo:'scambio',ris:r};
 }
 function rivalidaCarta(F){const p=piano(F.id);if(p.ci==null||p.fiato)return;const d=F.hand[p.ci];
   if(!d||motivoCartaNonGiocabile(S.G,F,d,p.move)){p.ci=null;p.t=null;return;}
@@ -418,7 +490,12 @@ const AZ={
   'ripos-resta':()=>{dopoPasso(continuaScambio(S.G,{}));},
   'ripos-ok':()=>{dopoPasso(continuaScambio(S.G,S.foglio.scelte));},
   'continua-coll':()=>{dopoPasso(continuaScambio(S.G,S.foglio.scelte));},
-  rivedi:()=>{S.foglio={tipo:'scambio',ris:S.ultimo};},
+  rivedi:()=>{if(S.ultimo.passi){apriReplay(S.ultimo);vaiFotogramma(0);}else S.foglio={tipo:'scambio',ris:S.ultimo};},
+  'replay-avanti':()=>vaiFotogramma(S.replay.i+1),
+  'replay-indietro':()=>{vaiFotogramma(S.replay.i-1);const R=S.replay;R.k=R.fot[R.i].snaps.length-1;R.anima=false;},
+  'replay-fine':()=>{vaiFotogramma(S.replay.fot.length-1);},
+  'replay-chiudi':()=>{clearTimeout(S.replay.timer);S.schermo=S.G.over?'fine':'scontro';},
+  'pedina-r':el=>{S.foglio={tipo:'info',id:el.dataset.id};},
   'menu-scontro':()=>{S.foglio={tipo:'menu'};},
   'tutti-ia':()=>{miei().forEach(F=>S.ia[F.id]=true);S.foglio=null;},
   arrenditi:()=>{S.G.over='B';salvaRegistro();S.foglio=null;S.schermo='fine';},

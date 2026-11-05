@@ -385,7 +385,7 @@ function* act(G,F,L,arrows){
 }
 function hurt(T,x,k=1){const ab=Math.min(T.integ||0,x*k);if(ab)T.integ-=ab;T.pf-=x-Math.ceil(ab/k);return ab;}
 function rdOf(T){const r=(T.post.includes('Pelle di Roccia')?2:0)+(T.post.includes('Corazza di Lava')?2:0)+(T.post.includes('Blindatura')?2:0)+(T.post.includes('Caldaia Rovente')?2:0)+(T.rd5>0?(T.rdSV||5):0)+(T.has('T15')&&!(T.fz==='dono'&&(T.softUntil||0)>=curN)?4:0)+(T.has('K8')&&T.logo>=2?2:0)+(T.rdT||0)+(T.rdTmp||0);return RULES.rdCap?Math.min(RULES.rdCap,r):r;}
-function* hit(G,F,T,d,a,e,dmg,o,L,arrows){const b0=new Set(Object.keys(T.stxNext||{}));yield* hit0(G,F,T,d,a,e,dmg,o,L,arrows);T.stxNomi=T.stxNomi||{};for(const k in (T.stxNext||{}))if(!b0.has(k))T.stxNomi[k]=(F.R||T.R).ST_TXT[k]||k;}
+function* hit(G,F,T,d,a,e,dmg,o,L,arrows){G.difensore=T;const b0=new Set(Object.keys(T.stxNext||{}));yield* hit0(G,F,T,d,a,e,dmg,o,L,arrows);T.stxNomi=T.stxNomi||{};for(const k in (T.stxNext||{}))if(!b0.has(k))T.stxNomi[k]=(F.R||T.R).ST_TXT[k]||k;}
 function* hit0(G,F,T,d,a,e,dmg,o,L,arrows){
   const ranged=dist(F,T)>1;let out,dtxt,extra='',defType=null;
   let triP=false;const spU=!!F.spir[T.id];if(spU){delete F.spir[T.id];F.stats.spir++;F.spUsed=true;}
@@ -466,7 +466,7 @@ function* hit0(G,F,T,d,a,e,dmg,o,L,arrows){
   L.push(`→ ${nm(T)} ${dtxt} → <b>${fin} ${fin===1?'danno':'danni'}</b>${T.pf<=0?' · <b>'+T.name+' è a terra</b>':''}.${extra}`);
 }
 function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.id].ai?manual[F.id]:null;G.manuali=new Set(G.fs.filter(F=>man(F)).map(F=>F.id));
-  const L=[],arrows=[];curN=n;const alive=()=>G.fs.filter(f=>f.pf>0);
+  const L=registroPassi(G),arrows=[];G._fr=arrows;curN=n;const alive=()=>G.fs.filter(f=>f.pf>0);
   alive().forEach(F=>{F.spUsed=false;F.slan=F.slanNext||0;F.slanNext=0;if(RULES.spExp&&F.spAge)for(const k in F.spir)if(F.spAge[k]<n-1){delete F.spir[k];}if(n>1){if(F.noRec){F.noRec=false;if(RULES.fulm==='mezzo')F.st+=1;}else F.st=Math.min(F.stMax,F.st+RULES.stRec);}F.debtNow=false;F.exh=false;F.fiato=false;if(F.adoUsed&&F.adoUsed<n)F.adoUsed=0;F.sbil=F.sbilNext;F.sbilNext=false;Object.assign(F.spir,F.spirNext);F.spirNext={};
     F.stx=F.stxNext;F.stxNext={};F.bDmg=F.bDmgNext;F.bDmgNext=0;F.bVel=F.bVelNext;F.bVelNext=0;F.taunt=F.tauntNext;F.tauntNext=null;
     F.defCount=0;F.rdTmp=0;F.movedNow=0;F.x3=false;F.acted=false;F.interr=null;F.card=null;F.tgt=null;F.vel=0;});
@@ -475,7 +475,7 @@ function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.i
     const adj0=enemies(G,F).filter(o=>dist(F,o)<=1);const s=man(F)?applyMove(G,F,man(F).move,L):moveAI(G,F);F.stats.moved+=s;F.movedNow=s;
     if(s&&RULES.ado&&!(RULES.v4ado&&F.has('V4')))adj0.filter(o=>o.pf>0&&dist(F,o)>1&&!(o.trat>0||o.prono>0||o.sbil)&&!o.adoUsed).forEach(o=>{o.adoUsed=n;const v=3+Math.max(o.mod.SAG,o.mod.DES,o.mod.FOR,o.mod.INT||0),x=Math.max(0,v-rdOf(F));hurt(F,x);o.stats.dmg+=x;o.stats.ado=(o.stats.ado||0)+1;L.push(`${nm(o)} colpisce ${nm(F)} che si disimpegna senza Schivata né Aggiramento: <b>attacco di opportunità</b>, ${x} danni.`);arrows.push({a:[o.x,o.y],b:[F.x,F.y],team:o.team,kind:'atk',out:'P'});});
     if(s){moves.push({a:[fx,fy],b:[F.x,F.y],team:F.team});L.push(`${nm(F)} ${F.lastDash?'scatta':'si muove'} di ${s} ${s===1?'casella':'caselle'} (−${F.lastCost} stamina${F.lastCost<s?(F.el==='V'?', passi leggeri del vento':F.el==='M'?', molle ai piedi':(F.fz==='dono'?', Vento che Attizza':'')):''}).`);}});
-  const acts=alive();
+  if(G.registra)G.passi.push({tipo:'azioni',snap:snap(G),frecce:arrows.length});const acts=alive();
   acts.forEach(F=>{if(F.isPet){F.card=null;F.adj=[];F.vel=F.pvel-(F.stx.A?1:0)-(F.trat>0?2:0);return;}F.stats.turns++;F.stats.stSum+=F.st;if(F.st<=2)F.stats.low++;const h0=F.hand;if(RULES.poteri&&F.poteri)F.hand=[...h0,...F.poteri.filter(d=>tecReady(F,d)&&(d.c.lv!=='Suprema'||F.fl>=3))];let ch=man(F)?pickManual(G,F,man(F)):choose(G,F);F.hand=h0;if(RULES.fiato&&!man(F)&&F.hand.length&&(!ch.d||(F.st<=2&&costOf(ch.d,F)>=F.st))){ch={d:F.hand.filter(x=>defInfo(x)).sort((a,b)=>velOf(F,b)-velOf(F,a))[0]||F.hand[0],t:null,fiato:true};}
     if(ch.fiato&&ch.d){F.exh=true;F.fiato=true;F.stats.fiato=(F.stats.fiato||0)+1;}else if(!ch.d&&F.hand.length){const d=F.hand.filter(x=>defInfo(x)).sort((a,b)=>velOf(F,b)-velOf(F,a))[0]||F.hand[0];ch={d,t:null};F.exh=true;F.stats.exh++;}
     if(ch.d){if(!ch.d.potere)F.hand.splice(F.hand.indexOf(ch.d),1);if(!F.exh){const k=costOf(ch.d,F);if(k>F.st){F.stats.debt++;F.debtNow=true;if(RULES.fulm==='scarica'){const x=2*(k-Math.max(0,F.st));F.pf-=x;F.stats.selfDmg=(F.stats.selfDmg||0)+x;L.push(`${nm(F)} va in Sovraccarico: la scarica gli costa ${x} PF.`);}}F.st-=k;if(F.st<0&&(RULES.fulm==='pieno'||RULES.fulm==='mezzo'))F.noRec=true;}F.card=ch.d;F.tgt=ch.t;F.vel=velOf(F,ch.d);{const gm=(ch.d.c.b||'').match(/Guardiano per (\d)/);if(gm&&RULES.guard){F.guard=n+(+gm[1])-1;L.push(`${nm(F)} si mette di Guardia: per ${gm[1]} scambi difende gli alleati adiacenti.`);}}
@@ -487,14 +487,14 @@ function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.i
   acts.sort((a,b)=>b.vel-a.vel);
   const groups=[];acts.forEach(F=>{const g=groups[groups.length-1];if(g&&g[0].vel===F.vel)g.push(F);else groups.push([F]);});
   for(const g of groups){if(g.length>1&&g.filter(f=>f.card).length>1)L.push(`Velocità ${g[0].vel} per ${g.map(nm).join(' e ')}: agiscono insieme.`);
-    for(const F of g){if(F.pf<=0){F.acted=true;continue;}if(F.isPet){yield* petAttack(G,F,L,arrows);F.acted=true;continue;}if(!F.card){L.push(`${nm(F)} non ha stamina per nessuna carta e resta scoperto.`);F.acted=true;continue;}
+    for(const F of g){if(F.pf<=0){F.acted=true;continue;}if(F.isPet){G.attore=F;G.difensore=null;yield* petAttack(G,F,L,arrows);G.attore=null;F.acted=true;continue;}if(!F.card){L.push(`${nm(F)} non ha stamina per nessuna carta e resta scoperto.`);F.acted=true;continue;}
       if(F.interr==='skip'){L.push(`${nm(F)} è stato interrotto: la sua <i>${esc(F.card.c.n)}</i> serve solo a difendersi.`);F.acted=true;continue;}
-      yield* act(G,F,L,arrows);}
+      G.attore=F;G.difensore=F.tgt&&F.tgt!==F?F.tgt:null;yield* act(G,F,L,arrows);G.attore=null;G.difensore=null;}
     g.forEach(F=>F.acted=true);}
   // Spiragli incrociati nello stesso scambio (ancora non usati) si annullano
   if(RULES.spirCancel)G.fs.forEach(F=>G.fs.forEach(O=>{if(F.id>=O.id||F.team===O.team)return;const fNew=(F.spir[O.id]||F.spirNext[O.id])&&!sp0.get(F.id)[O.id],oNew=(O.spir[F.id]||O.spirNext[F.id])&&!sp0.get(O.id)[F.id];
     if(fNew&&oNew){delete F.spir[O.id];delete F.spirNext[O.id];delete O.spir[F.id];delete O.spirNext[F.id];L.push(`${nm(F)} e ${nm(O)} si sono aperti un varco a vicenda nello stesso scambio: i due <b>Spiragli si annullano</b>.`);}}));
-  G.fs.forEach(F=>{if(F.card){if(!F.card.potere&&!F.card.c.post&&!(F.card.c.tr&&!F.has('K15')&&!F.exh))F.disc.push(F.card);ingEnd(G,F,L);if(F.card.c.s&&!F.card.c.lv){F.chain.push(F.card.c.s==='del tuo elemento'?'Jolly':F.card.c.s);if(F.chain.length>3)F.chain.shift();}
+  if(G.registra)G.passi.push({tipo:'fine',snap:snap(G),frecce:arrows.length});G.fs.forEach(F=>{if(F.card){if(!F.card.potere&&!F.card.c.post&&!(F.card.c.tr&&!F.has('K15')&&!F.exh))F.disc.push(F.card);ingEnd(G,F,L);if(F.card.c.s&&!F.card.c.lv){F.chain.push(F.card.c.s==='del tuo elemento'?'Jolly':F.card.c.s);if(F.chain.length>3)F.chain.shift();}
       if(F.has('C7')&&fxOf(F.card.c).cat!=='atk')F.fl=Math.min(F.flMax,F.fl+1);}
     if(F.isPet){if(F.pf<=0&&F.owner.has('M15')&&!F.rebuilt&&F.owner.pf>0){F.rebuilt=true;F.pf=Math.floor(F.pfMax/2);L.push(`Fabbrica da Campo: ${nm(F)} si ricostruisce (${F.pf}).`);}
       if(F.pf>0&&F.kind==='automa'&&F.owner.m6===0)enemies(G,F).filter(o=>dist(o,F)<=1&&!o.isPet).forEach(o=>o.tauntNext=F.id);
@@ -505,7 +505,7 @@ function* exchangeGen(G,n,manual){const man=F=>manual&&manual[F.id]&&!manual[F.i
     if(F.trat>0)F.trat--;if(F.lega>0)F.lega--;if(F.prono>0)F.prono--;if(F.rd5>0)F.rd5--;
     const z=F.hand.find(d=>d.c.zav);if(z&&F.st>=1){F.hand.splice(F.hand.indexOf(z),1);F.disc.push(z);F.st-=1;L.push(`${nm(F)} scarta la zavorra <i>${esc(z.c.n)}</i> (−1 stamina).`);}
     drawCard(F,L);});
-  return{n,lines:L,moves,arrows,cards,pos,end:snap(G)};
+  return{n,lines:L,moves,arrows,cards,pos,end:snap(G),passi:G.registra?G.passi:null};
 }
 function ingTxt(F){const r=[];if(F.integMax)r.push(`Integrità ${F.integ}/${F.integMax}`);if(F.isPet)r.push(F.kind==='torretta'?'torretta, spara da sola':'automa, attacca da solo');if(F.deckList.some(d=>/Sparo/.test(d.c.a||'')))r.push(`Colpi ${F.ammo}/${F.ammoMax}`);if(F.deckList.some(d=>d.c.tr))r.push(`Logoramento ${F.logo}`);if(F.hasPro)r.push(F.protBroken?'Protesi danneggiata':`Pressione ${F.press}/${F.pressMax}${F.hotUntil>=curN?' (surriscaldata)':''}`);return r.join(' · ');}
 function snap(G){return G.fs.map(F=>({pet:F.isPet?F.kind:null,id:F.id,name:F.name,team:F.team,el:F.el,x:F.x,y:F.y,pf:F.pf,pfMax:F.pfMax,st:F.st,fl:F.fl,ing:ingTxt(F),chain:[...F.chain],post:[...F.post],
@@ -584,6 +584,7 @@ function* muoviTutti(G,n,man,L,arrows,moves){
       if(c>F.st){m.stop=true;continue;}F.st-=c;m.cost+=c;m.steps++;if(cassa)m.casse++;F.x=nx;F.y=ny;m.i++;mossi.add(F.id);}
     // un movimento non può finire sopra una cassa: se si è fermato lì, torna indietro di una casella
     // collisioni nuove tra avversari
+    if(G.registra)G.passi.push({tipo:'passo',snap:snap(G),frecce:arrows.length});
     const coll=[];vivi().forEach(a=>vivi().forEach(b=>{if(a.team<b.team&&dist(a,b)<=1&&(mossi.has(a.id)||mossi.has(b.id))&&!gestite.has(pk(a,b))){gestite.add(pk(a,b));coll.push([a,b]);}}));
     if(!coll.length)continue;
     const coinvolti=[...new Set(coll.flat())],dec={},chiedi=[];
@@ -619,6 +620,11 @@ function* sceltaRipos(G,M,O,r,mode,arrows,kind){
   const v=ans&&ans[M.id];const c=v&&cs.find(c=>c[0]===v[0]&&c[1]===v[1]);if(!c)return '';
   const from=[M.x,M.y];M.x=c[0];M.y=c[1];arrows.push({a:from,b:[M.x,M.y],team:M.team,kind:'move'});return `di ${c[2]} ${c[2]===1?'casella':'caselle'}`;}
 
+/* Registro dei passi: ogni riga del racconto con la foto del campo in quel momento, chi agisce e chi difende. */
+function registroPassi(G){const L=[];if(!G.registra)return L;G.attore=null;G.difensore=null;G.passi=[{tipo:'inizio',snap:snap(G),frecce:0}];
+  L.push=function(...xs){for(const x of xs){Array.prototype.push.call(this,x);G.passi.push({tipo:'riga',testo:x,snap:snap(G),frecce:G._fr?G._fr.length:0,att:G.attore?G.attore.id:null,dif:G.difensore?G.difensore.id:null});}return this.length;};
+  return L;}
+
 
 /* ===================== API PER L'APP: partita manuale =====================
    const G = nuovaPartita({map:'casse', A:[{fz:'dono',bi:0,L:5,scheda?}, {fz:'ingegno',bi:3,L:5}], B:[...]});
@@ -643,7 +649,7 @@ function nuovaPartita(cfg){RND=Math.random;curN=1;const G={obs:new Map(MAPS[cfg.
   ['A','B'].forEach(side=>cfg[side].forEach((c,i)=>{const F=mkF(c.fz||'dono',c.bi,side,i,c.L,c.scheda||null);F.x=side==='A'?1:W-2;F.y=ys[i];G.fs.push(F);}));
   const cnt={};G.fs.forEach(F=>cnt[F.name]=(cnt[F.name]||0)+1);const seen={};
   G.fs.forEach(F=>{if(cnt[F.name]>1){seen[F.name]=(seen[F.name]||0)+1;F.name+=' '+seen[F.name];}});
-  spawnAutomi(G);return G;}
+  spawnAutomi(G);G.registra=true;return G;}
 const personaggio=(G,id)=>G.fs.find(f=>f.id===id);
 function caselleRaggiungibili(G,F){const sp=stPlan(G,F);if(!RULES.movSim){const R=reachFor(G,F,sp),out=new Map();for(const[k,s]of R){if(Math.max(0,s-freeVOf(F))<=sp)out.set(k,s);}return out;}
   const out=new Map();for(const[k,r]of reach(G,F,passiMax(G,F),sp))out.set(k,r.c);return out;}
