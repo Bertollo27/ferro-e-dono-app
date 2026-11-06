@@ -6,7 +6,7 @@
    ============================================================ */
 (()=>{
 'use strict';
-const VERSIONE='0.6 · fase 1';
+const VERSIONE='0.6.1 · fase 1';
 const $app=document.getElementById('app');
 const E=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -262,20 +262,43 @@ function pedinaSvg(cx,cy,r,team,el){
 function freccia(a,b,col,C,dash){if(a[0]===b[0]&&a[1]===b[1])return '';const m=col.includes('vinta')?'C':col.includes('-A')?'A':'B';
   return `<line class="g-freccia" x1="${a[0]*C+C/2}" y1="${a[1]*C+C/2}" x2="${b[0]*C+C/2}" y2="${b[1]*C+C/2}" stroke="${col}" ${dash?`stroke-dasharray="${dash}"`:''} marker-end="url(#pt${m})" pointer-events="none"/>`;}
 
+
+/* requisito di attivazione delle tecniche: cosa serve e se si attiverebbe adesso */
+function requisitoPotere(F,d){
+  const c=d.c,dono=F.fz==='dono',ch=F.chain,sig=dono?'sigillo':'pezzo',sigs=dono?'sigilli':'pezzi';
+  const chip=(n,ok)=>`<span class="simbolo ${ok?'si':'no'}">${E(n)}</span>`;
+  const vulc=F.has('F15')&&isFire(F,d)&&c.lv!=='Suprema';
+  let serve='',ok;
+  if(c.lv){ok=tecReady(F,d);
+    if(vulc)serve='nessun '+sig+' (talento)';
+    else if(c.lv==='Base')serve=chip('1 '+sig+' qualsiasi',ch.length>=1);
+    else if(c.lv==='Avanzata'){const pool=[...ch];serve=c.seq.split(' + ').map(n=>{const i=pool.findIndex(h=>sigOk(h,n));if(i>=0)pool.splice(i,1);return chip(n,i>=0);}).join(' + ');}
+    else{const fl=chip(`3 ${parola(F.fz,'flusso')}`,F.fl>=3);
+      if(RULES.pureSup&&!F.has('C4'))serve=chip(`3 ${sigs} qualsiasi`,ch.length>=3)+' '+fl;
+      else if(RULES.supAny){const pool=[...ch];serve=c.seq.split(' → ').map(n=>{const i=pool.findIndex(h=>sigOk(h,n));if(i>=0)pool.splice(i,1);return chip(n,i>=0);}).join(' + ')+' '+fl;}
+      else serve=c.seq.split(' → ').map((n,i)=>chip(n,sigOk(ch[i],n))).join(' → ')+' '+fl;}}
+  else if(/tecnica Base|completi una Base/.test(c.a||'')){ok=ch.length>=1||vulc;serve=vulc?'nessun '+sig+' (talento)':chip('1 '+sig+' qualsiasi',ch.length>=1);}
+  else return '';
+  const tit=c.lv?'Tecnica':'Bonus tecnica Base';
+  return `<div class="potere ${ok?'pronto':'manca'}"><span class="potere-stato">${ok?'✓ si attiva':'✗ non si attiva'}</span><small>${tit} · serve</small><div class="simboli">${serve}</div>
+    <small class="tenue-p">${dono?'Catena':'Banco'}: ${ch.length?E(ch.join(', ')):'vuoto'}</small></div>`;
+}
 function vCarta(F,d,i,p){
   const c=d.c,mot=p.fiato?'':motivoCartaNonGiocabile(S.G,F,d,p.move),scelta=p.ci===i,fz=F.fz;
   let piede='';
   if(c.zav)piede='Zavorra';
   else if(c.lv)piede=`Tecnica ${E(c.lv)}${c.seq?' · '+E(c.seq):''}${c.lv==='Suprema'?' · 3 '+E(parola(fz,'flusso')):''}`;
   else if(c.post)piede='Postura';
-  else if(c.s)piede=`${fz==='dono'?'Sigillo':'Pezzo'}: ${E(c.s)}`;
+  else if(c.s){piede=`${fz==='dono'?'Sigillo':'Pezzo'}: ${E(c.s)}`;
+    const per=F.hand.filter(h=>h.c.lv&&h.c.seq&&!tecReady(F,h)&&(c.s==='del tuo elemento'||h.c.seq.split(/ \+ | → /).includes(c.s))).map(h=>h.c.n);
+    if(per.length)piede+=` <span class="serve-a">serve a ${E([...new Set(per)].join(', '))}</span>`;}
   if(c.tr)piede+=' · Trasmutazione';
   if(d.mods.length)piede+=' · '+E(d.mods.join(', '));
   return `<button class="carta${c.zav?' zavorra':''}${scelta?' scelta':''}${mot?' no':''}" style="--el:var(--el-${F.el})" data-act="carta" data-i="${i}" aria-pressed="${scelta}">
     <div class="testa"><b>${E(c.n)}</b><span class="num">⚡${velOf(F,d)} · ${costOf(d,F)}st</span></div>
     ${c.a?`<div class="meta"><small>${c.b?'Attacco':'Effetto'}</small>${rpsIco(c.a)} ${E(c.a)}</div>`:''}
     ${c.b?`<div class="meta"><small>Difesa</small>${rpsIco(c.b)} ${E(c.b)}</div>`:''}
-    <div class="piede">${piede}</div>${mot?`<div class="perche">${E(mot)}</div>`:''}</button>`;
+    ${requisitoPotere(F,d)}<div class="piede">${piede}</div>${mot?`<div class="perche">${E(mot)}</div>`:''}</button>`;
 }
 function infoPg(F,breve){
   const sn=istantanea(S.G).find(x=>x.id===F.id)||{stati:[]};const fr=Math.max(0,F.pf)/F.pfMax;

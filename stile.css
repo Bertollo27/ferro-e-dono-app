@@ -143,6 +143,16 @@ button.nodo:active{transform:scale(.99)}
 .carta .perche{padding:5px 9px;font-size:11.5px;font-weight:600;color:#a3321c;background:rgba(163,50,28,.08)}
 .carta.zavorra .testa{background:repeating-linear-gradient(45deg,#5a5048,#5a5048 7px,#3e3731 7px,#3e3731 14px)}
 .rps{font-size:15px;margin-right:2px}
+.carta .potere{padding:6px 9px;border-top:1px dashed var(--pergamena-linea);display:flex;flex-direction:column;gap:3px;background:rgba(0,0,0,.03)}
+.carta .potere small{font:700 9.5px var(--f-numeri);letter-spacing:.1em;text-transform:uppercase;color:var(--pergamena-tenue)}
+.carta .potere small.tenue-p{letter-spacing:0;text-transform:none;font-weight:400}
+.potere-stato{align-self:flex-start;font:800 10.5px var(--f-numeri);padding:2px 7px;border-radius:99px;color:#fff}
+.potere.pronto .potere-stato{background:#2f8a4f;box-shadow:0 0 8px rgba(80,200,120,.45)}
+.potere.manca .potere-stato{background:#a3321c}
+.simboli{display:flex;flex-wrap:wrap;gap:3px;align-items:center;font-size:11px}
+.simbolo{padding:1px 6px;border-radius:6px;font-weight:700;font-size:11px;border:1px solid}
+.simbolo.si{background:rgba(47,138,79,.14);border-color:#2f8a4f;color:#1f6b3a}
+.simbolo.no{background:rgba(163,50,28,.08);border-color:rgba(163,50,28,.5);color:#8d2c18;border-style:dashed}
 
 /* ---------- Scontro: griglia ---------- */
 .griglia{width:100%;height:auto;display:block;border-radius:12px;touch-action:manipulation;user-select:none;
@@ -212,3 +222,5 @@ details.riquadro .registro{margin-top:8px}
 .tabella td,.tabella th{border-bottom:1px solid var(--linea);padding:7px 5px;text-align:left}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.carta .piede .serve-a{display:inline-block;margin-left:2px;padding:0 5px;border-radius:5px;background:rgba(47,138,79,.16);color:#1f6b3a;font-weight:700}
