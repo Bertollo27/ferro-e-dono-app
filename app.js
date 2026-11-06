@@ -6,7 +6,7 @@
    ============================================================ */
 (()=>{
 'use strict';
-const VERSIONE='0.5 · fase 1';
+const VERSIONE='0.6 · fase 1';
 const $app=document.getElementById('app');
 const E=t=>String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -56,6 +56,13 @@ function vHome(){
   const n=mem.get('fd-registro',[]).length;
   return `<div class="pila">
   <header class="home-testa pila">
+    <svg class="emblema" viewBox="0 0 512 512" aria-hidden="true">
+      <defs><radialGradient id="em-o" cx="40%" cy="35%" r="70%"><stop offset="0" style="stop-color:#ffe6a6"/><stop offset=".5" style="stop-color:#d9a548"/><stop offset="1" style="stop-color:#6e4a17"/></radialGradient>
+      <radialGradient id="em-f" cx="50%" cy="75%" r="65%"><stop offset="0" style="stop-color:#fff3b0"/><stop offset=".45" style="stop-color:#ffb43c"/><stop offset="1" style="stop-color:#d9431e"/></radialGradient></defs>
+      <g class="ruota">${Array.from({length:12},(_,i)=>`<rect x="232" y="40" width="48" height="70" rx="8" transform="rotate(${i*30} 256 256)" style="fill:url(#em-o)"/>`).join('')}
+      <circle cx="256" cy="256" r="170" style="fill:url(#em-o)"/><circle cx="256" cy="256" r="128" style="fill:#1a140f;stroke:#6e4a17;stroke-width:8"/></g>
+      <path d="M256 150c18 46 70 70 70 132a70 70 0 0 1-140 0c0-34 18-52 30-70 4 22 14 32 24 36-6-40 0-70 16-98z" style="fill:url(#em-f)"/>
+    </svg>
     <span class="sigillo">Combattimento a carte</span>
     <h1>Ferro &amp; Dono</h1>
     <p class="tenue">Scegli i personaggi, falli crescere fino al livello della partita e sfida l'IA su una griglia. Dono e Ingegno possono stare nella stessa squadra.</p>
@@ -210,15 +217,47 @@ function vGriglia(opt={}){
     parts.push(`<g class="g-pedina toccabile" data-act="pedina" data-id="${o.id}" role="button" aria-label="${E(o.name)}">
       ${sel?`<circle class="g-scelto" cx="${cx}" cy="${cy}" r="${r+3}"/>`:''}
       ${tg?`<circle class="g-bersaglio${cura?' cura':''}${tsel?' scelto':''}" cx="${cx}" cy="${cy}" r="${r+4}"/>`:''}
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="${colSq(o.team)}" stroke="var(--el-${o.el})" stroke-width="3"/>
+      ${pedinaSvg(cx,cy,r,o.team,o.el)}
       <text x="${cx}" y="${cy-1}">${E(sigle(o))}</text>
       <rect class="g-pf-fondo" x="${o.x*C+4}" y="${o.y*C+C-6}" width="${C-8}" height="4" rx="2"/>
       <rect x="${o.x*C+4}" y="${o.y*C+C-6}" width="${Math.max(0,(C-8)*fr)}" height="4" rx="2" fill="${fr>.5?'var(--vinta)':fr>.25?'var(--retta)':'var(--persa)'}"/></g>`);});
   // fantasmi dei movimenti pianificati
   if(!opt.frecce)miei().forEach(o=>{const q=S.piani[o.id];if(q&&q.move&&!S.ia[o.id])parts.push(`<circle class="g-fantasma" cx="${q.move[0]*C+C/2}" cy="${q.move[1]*C+C/2}" r="14" fill="${colSq('A')}" pointer-events="none"/>`);});
   return `<svg class="griglia" viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="Campo di battaglia">
-    <defs>${['A','B'].map(t=>`<marker id="pt${t}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${colSq(t)}"/></marker>`).join('')}<marker id="ptC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--vinta)"/></marker></defs>
+    ${svgDefs()}
     ${parts.join('')}</svg>`;
+}
+
+/* ---------- Grafica del campo: motivi e pedine ---------- */
+function svgDefs(){
+  const mk=(id,col)=>`<marker id="${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:${col}"/></marker>`;
+  const pd=t=>`<radialGradient id="pd${t}" cx="38%" cy="32%" r="70%"><stop offset="0" style="stop-color:color-mix(in srgb,var(--squadra-${t}) 55%,white)"/><stop offset=".55" style="stop-color:var(--squadra-${t})"/><stop offset="1" style="stop-color:var(--squadra-${t}-scuro)"/></radialGradient>`;
+  return `<defs>${mk('ptA',colSq('A'))}${mk('ptB',colSq('B'))}${mk('ptC','var(--vinta)')}${pd('A')}${pd('B')}
+  <pattern id="g-pav" width="36" height="36" patternUnits="userSpaceOnUse">
+    <rect width="36" height="36" style="fill:var(--cella)"/>
+    <path d="M0 0H18V18H0z M18 18H36V36H18z" style="fill:var(--cella-2)"/>
+    <path d="M3 7l5 1M24 4l4 3M8 27l3-3M27 25l5 2" style="stroke:rgba(255,255,255,.05);stroke-width:1;fill:none"/>
+    <circle cx="18" cy="18" r="1.4" style="fill:rgba(217,165,72,.18)"/></pattern>
+  <pattern id="g-legno" width="28" height="28" patternUnits="userSpaceOnUse" x="4" y="4">
+    <rect width="28" height="28" style="fill:var(--cassa)"/>
+    <path d="M0 7H28M0 14H28M0 21H28" style="stroke:var(--cassa-scuro);stroke-width:1;opacity:.55"/>
+    <path d="M2 2L26 26M26 2L2 26" style="stroke:var(--cassa-scuro);stroke-width:3;opacity:.8"/>
+    <rect x="1" y="1" width="26" height="26" style="fill:none;stroke:color-mix(in srgb,var(--cassa) 60%,white);stroke-width:1;opacity:.5"/>
+    <circle cx="4" cy="4" r="1.3" style="fill:#d9c08a"/><circle cx="24" cy="4" r="1.3" style="fill:#d9c08a"/><circle cx="4" cy="24" r="1.3" style="fill:#d9c08a"/><circle cx="24" cy="24" r="1.3" style="fill:#d9c08a"/></pattern>
+  <pattern id="g-pietra" width="36" height="18" patternUnits="userSpaceOnUse">
+    <rect width="36" height="18" style="fill:var(--muro-scuro)"/>
+    <rect x="1" y="1" width="16" height="7" rx="1" style="fill:var(--muro)"/><rect x="19" y="1" width="16" height="7" rx="1" style="fill:color-mix(in srgb,var(--muro) 85%,black)"/>
+    <rect x="-8" y="10" width="16" height="7" rx="1" style="fill:color-mix(in srgb,var(--muro) 90%,white)"/><rect x="10" y="10" width="16" height="7" rx="1" style="fill:var(--muro)"/><rect x="28" y="10" width="16" height="7" rx="1" style="fill:color-mix(in srgb,var(--muro) 90%,white)"/>
+    <path d="M1 1.5H17M19 1.5H35M10 10.5H26" style="stroke:rgba(255,255,255,.12);stroke-width:1"/></pattern>
+  <filter id="g-ombra" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="2" stdDeviation="1.6" flood-color="#000" flood-opacity=".7"/></filter>
+  </defs>`;
+}
+/* pedina metallica: ombra, anello d'ottone, colore della squadra, filo dell'elemento */
+function pedinaSvg(cx,cy,r,team,el){
+  return `<ellipse cx="${cx}" cy="${cy+r-2}" rx="${r}" ry="${r*.35}" style="fill:rgba(0,0,0,.45)"/>
+      <circle cx="${cx}" cy="${cy}" r="${r+1.5}" style="fill:var(--ottone-scuro)" filter="url(#g-ombra)"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#pd${team})" style="stroke:var(--el-${el});stroke-width:3"/>
+      <circle cx="${cx}" cy="${cy}" r="${r-4}" style="fill:none;stroke:rgba(255,255,255,.18);stroke-width:1"/>`;
 }
 function freccia(a,b,col,C,dash){if(a[0]===b[0]&&a[1]===b[1])return '';const m=col.includes('vinta')?'C':col.includes('-A')?'A':'B';
   return `<line class="g-freccia" x1="${a[0]*C+C/2}" y1="${a[1]*C+C/2}" x2="${b[0]*C+C/2}" y2="${b[1]*C+C/2}" stroke="${col}" ${dash?`stroke-dasharray="${dash}"`:''} marker-end="url(#pt${m})" pointer-events="none"/>`;}
@@ -232,7 +271,7 @@ function vCarta(F,d,i,p){
   else if(c.s)piede=`${fz==='dono'?'Sigillo':'Pezzo'}: ${E(c.s)}`;
   if(c.tr)piede+=' · Trasmutazione';
   if(d.mods.length)piede+=' · '+E(d.mods.join(', '));
-  return `<button class="carta${c.zav?' zavorra':''}${scelta?' scelta':''}${mot?' no':''}" data-act="carta" data-i="${i}" aria-pressed="${scelta}">
+  return `<button class="carta${c.zav?' zavorra':''}${scelta?' scelta':''}${mot?' no':''}" style="--el:var(--el-${F.el})" data-act="carta" data-i="${i}" aria-pressed="${scelta}">
     <div class="testa"><b>${E(c.n)}</b><span class="num">⚡${velOf(F,d)} · ${costOf(d,F)}st</span></div>
     ${c.a?`<div class="meta"><small>${c.b?'Attacco':'Effetto'}</small>${rpsIco(c.a)} ${E(c.a)}</div>`:''}
     ${c.b?`<div class="meta"><small>Difesa</small>${rpsIco(c.b)} ${E(c.b)}</div>`:''}
@@ -310,23 +349,25 @@ function vCampo(snap,prima,frecce,evid){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const o=G.obs.get(key(x,y));parts.push(`<rect class="g-cella" x="${x*C}" y="${y*C}" width="${C}" height="${C}"/>`);
     if(o)parts.push(`<rect class="${o==='m'?'g-muro':'g-cassa'}" x="${x*C+(o==='m'?0:4)}" y="${y*C+(o==='m'?0:4)}" width="${o==='m'?C:C-8}" height="${o==='m'?C:C-8}" rx="${o==='m'?0:3}"/>`);}
   frecce.forEach(a=>parts.push(freccia(a.a,a.b,a.kind==='heal'||a.kind==='repair'?'var(--vinta)':colSq(a.team),C,a.kind==='move'||a.kind==='push'?'4 4':'')));
-  const pm=new Map((prima||[]).map(o=>[o.id,o]));
+  const pm=new Map((prima||[]).map(o=>[o.id,o])),numeri=[],R_NUM=S.replay.fot[S.replay.i].tipo!=='mov';
   snap.forEach(o=>{const vivo=o.pf>0,q=pm.get(o.id),cx=o.x*C+C/2,cy=o.y*C+C/2,r=o.pet?11:14,fr=Math.max(0,o.pf)/o.pfMax;
     if(!vivo&&!(q&&q.pf>0))return;
+    const dpf=q&&R_NUM?o.pf-q.pf:0;
     const anim=q&&(q.x!==o.x||q.y!==o.y)&&S.replay.anima?`<animateTransform attributeName="transform" type="translate" from="${(q.x-o.x)*C} ${(q.y-o.y)*C}" to="0 0" dur="0.28s" fill="freeze" begin="indefinite"/>`:'';
-    parts.push(`<g class="g-pedina${vivo?'':' g-fantasma'}" data-act="pedina-r" data-id="${o.id}">${anim}
+    parts.push(`<g class="g-pedina${vivo?'':' g-fantasma'}${dpf<0?' g-colpito':''}" data-act="pedina-r" data-id="${o.id}">${anim}
       ${evid.att===o.id?`<circle class="g-scelto" cx="${cx}" cy="${cy}" r="${r+3}"/>`:''}${evid.dif===o.id?`<circle class="g-bersaglio scelto" cx="${cx}" cy="${cy}" r="${r+4}"/>`:''}
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="${colSq(o.team)}" stroke="var(--el-${o.el})" stroke-width="3"/>
+      ${pedinaSvg(cx,cy,r,o.team,o.el)}
       <text x="${cx}" y="${cy-1}">${vivo?E(sigleS(o)):'✕'}</text>
       <rect class="g-pf-fondo" x="${o.x*C+4}" y="${o.y*C+C-6}" width="${C-8}" height="4" rx="2"/>
-      <rect x="${o.x*C+4}" y="${o.y*C+C-6}" width="${(C-8)*fr}" height="4" rx="2" fill="${fr>.5?'var(--vinta)':fr>.25?'var(--retta)':'var(--persa)'}"/></g>`);});
+      <rect x="${o.x*C+4}" y="${o.y*C+C-6}" width="${(C-8)*fr}" height="4" rx="2" fill="${fr>.5?'var(--vinta)':fr>.25?'var(--retta)':'var(--persa)'}"/></g>`);
+    if(dpf)numeri.push(`<text class="g-numero ${dpf<0?'danno':'cura'}" x="${o.x>=W-1?cx-r-2:cx+r+2}" y="${cy-r+6}" style="text-anchor:${o.x>=W-1?'end':'start'}">${dpf<0?'−'+(-dpf):'+'+dpf}</text>`);});
   return `<svg class="griglia" viewBox="0 0 ${W*C} ${H*C}" role="img" aria-label="Campo di battaglia">
-    <defs>${['A','B'].map(t=>`<marker id="pt${t}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${colSq(t)}"/></marker>`).join('')}<marker id="ptC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--vinta)"/></marker></defs>
-    ${parts.join('')}</svg>`;
+    ${svgDefs()}
+    ${parts.join('')}${numeri.join('')}</svg>`;
 }
 function cartaDuello(cc,meta){// cc = voce di ris.cards; meta = 'a' (attacca con la metà alta) o 'b' (difende con la metà bassa)
   if(!cc||!cc.card)return '';const c=cc.card.c;
-  return `<div class="carta duello-carta"><div class="testa"><b>${E(c.n)}</b><span class="num">⚡${cc.vel}</span></div>
+  const pr=S.G.fs.find(o=>o.id===cc.id);return `<div class="carta duello-carta"${pr?` style="--el:var(--el-${pr.el})"`:''}><div class="testa"><b>${E(c.n)}</b><span class="num">⚡${cc.vel}</span></div>
     ${c.a?`<div class="meta ${meta==='a'?'attiva':'spenta'}"><small>${c.b?'Attacco':'Effetto'} · <span class="t${cc.team}">${E(cc.name)}</span></small>${rpsIco(c.a)} ${E(c.a)}</div>`:''}
     ${c.b?`<div class="meta ${meta==='b'?'attiva':'spenta'}"><small>Difesa · <span class="t${cc.team}">${E(cc.name)}</span></small>${rpsIco(c.b)} ${E(c.b)}</div>`:''}</div>`;
 }
