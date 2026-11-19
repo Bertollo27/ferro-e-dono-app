@@ -1,0 +1,565 @@
+{
+ "project": "MY-GDR",
+ "updated": "2026-11-19",
+ "commit": "17e83a3",
+ "generator": "hand-made, graphify-like",
+ "nodes": [
+  {
+   "id": "dati-dono",
+   "label": "dati-dono.js",
+   "type": "file",
+   "source": "repo",
+   "community": "A"
+  },
+  {
+   "id": "dati-ingegno",
+   "label": "dati-ingegno.js",
+   "type": "file",
+   "source": "repo",
+   "community": "A"
+  },
+  {
+   "id": "motore",
+   "label": "motore.js",
+   "type": "file",
+   "source": "repo",
+   "community": "B"
+  },
+  {
+   "id": "app",
+   "label": "app.js",
+   "type": "file",
+   "source": "repo",
+   "community": "C"
+  },
+  {
+   "id": "index",
+   "label": "index.html",
+   "type": "file",
+   "source": "repo",
+   "community": "C"
+  },
+  {
+   "id": "stile",
+   "label": "stile.css",
+   "type": "file",
+   "source": "repo",
+   "community": "C"
+  },
+  {
+   "id": "guida",
+   "label": "guida.html",
+   "type": "file",
+   "source": "repo",
+   "community": "D"
+  },
+  {
+   "id": "sw",
+   "label": "sw.js",
+   "type": "file",
+   "source": "repo",
+   "community": "D"
+  },
+  {
+   "id": "test",
+   "label": "test-motore.mjs",
+   "type": "file",
+   "source": "repo",
+   "community": "D"
+  },
+  {
+   "id": "readme",
+   "label": "README.md",
+   "type": "file",
+   "source": "repo",
+   "community": "D"
+  },
+  {
+   "id": "RULES",
+   "label": "RULES (parametri)",
+   "type": "code",
+   "source": "motore.js:105",
+   "community": "B"
+  },
+  {
+   "id": "TRI",
+   "label": "TRI triangolo attacco/difesa",
+   "type": "code",
+   "source": "motore.js:111",
+   "community": "B"
+  },
+  {
+   "id": "fxOf",
+   "label": "fxOf effetto carta",
+   "type": "code",
+   "source": "motore.js:139",
+   "community": "B"
+  },
+  {
+   "id": "IA",
+   "label": "moveAI/choose",
+   "type": "code",
+   "source": "motore.js:226",
+   "community": "B"
+  },
+  {
+   "id": "pet",
+   "label": "pet/automa/torrette",
+   "type": "code",
+   "source": "motore.js:276",
+   "community": "B"
+  },
+  {
+   "id": "act",
+   "label": "act",
+   "type": "code",
+   "source": "motore.js:321",
+   "community": "B"
+  },
+  {
+   "id": "hit",
+   "label": "hurt/rdOf/hit",
+   "type": "code",
+   "source": "motore.js:386",
+   "community": "B"
+  },
+  {
+   "id": "exchangeGen",
+   "label": "exchangeGen (Scambio)",
+   "type": "code",
+   "source": "motore.js:468",
+   "community": "B"
+  },
+  {
+   "id": "runFight",
+   "label": "runFight",
+   "type": "code",
+   "source": "motore.js:513",
+   "community": "B"
+  },
+  {
+   "id": "movimento",
+   "label": "movimento simultaneo",
+   "type": "code",
+   "source": "motore.js:525",
+   "community": "B"
+  },
+  {
+   "id": "apiPartita",
+   "label": "API partita manuale",
+   "type": "code",
+   "source": "motore.js:629",
+   "community": "B"
+  },
+  {
+   "id": "apiCrescita",
+   "label": "API crescita",
+   "type": "code",
+   "source": "motore.js:676",
+   "community": "B"
+  },
+  {
+   "id": "dati-dono:N",
+   "label": "N nodi",
+   "type": "code",
+   "source": "dati-dono.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-dono:BUILDS",
+   "label": "BUILDS",
+   "type": "code",
+   "source": "dati-dono.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-dono:EL",
+   "label": "EL carte",
+   "type": "code",
+   "source": "dati-dono.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-dono:PROF",
+   "label": "PROF profili IA",
+   "type": "code",
+   "source": "dati-dono.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-dono:XB/XR",
+   "label": "XB/XR incroci",
+   "type": "code",
+   "source": "dati-dono.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-ingegno:N",
+   "label": "N nodi",
+   "type": "code",
+   "source": "dati-ingegno.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-ingegno:BUILDS",
+   "label": "BUILDS",
+   "type": "code",
+   "source": "dati-ingegno.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-ingegno:EL",
+   "label": "EL carte",
+   "type": "code",
+   "source": "dati-ingegno.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-ingegno:PROF",
+   "label": "PROF profili IA",
+   "type": "code",
+   "source": "dati-ingegno.js",
+   "community": "A"
+  },
+  {
+   "id": "dati-ingegno:XB/XR",
+   "label": "XB/XR incroci",
+   "type": "code",
+   "source": "dati-ingegno.js",
+   "community": "A"
+  },
+  {
+   "id": "doc",
+   "label": "Design doc",
+   "type": "artifact",
+   "source": "https://claude.ai/artifact/TaQyGhxEZ1yc9Y2jUWJzt7",
+   "community": "E"
+  },
+  {
+   "id": "alberi",
+   "label": "Alberi abilità v0.2",
+   "type": "artifact",
+   "source": "https://claude.ai/artifact/75TKbcqE68SjNFCwASayyg",
+   "community": "E"
+  },
+  {
+   "id": "visDono",
+   "label": "Visualizzatore Dono",
+   "type": "artifact",
+   "source": "https://claude.ai/artifact/WzNtKummbDhSNngVVhdvi7",
+   "community": "E"
+  },
+  {
+   "id": "ragIng",
+   "label": "Ragnatela Ingegno",
+   "type": "artifact",
+   "source": "https://claude.ai/artifact/B3fnBaGvo616vBqjad5LDB",
+   "community": "E"
+  },
+  {
+   "id": "mazzo",
+   "label": "Varianti del mazzo",
+   "type": "artifact",
+   "source": "https://claude.ai/artifact/81UvSkN3hFwcAzaYADQ9Tp",
+   "community": "E"
+  },
+  {
+   "id": "guidaArt",
+   "label": "Guida nuovi giocatori",
+   "type": "artifact",
+   "source": "https://claude.ai/artifact/KvDwUjvqA3wowpjqRD4gFc",
+   "community": "E"
+  },
+  {
+   "id": "kimi",
+   "label": "ISTRUZIONI-PER-KIMI.md",
+   "type": "file",
+   "source": "/mnt/project-files/app-telefono/",
+   "community": "E"
+  },
+  {
+   "id": "memoria",
+   "label": "Memoria di progetto",
+   "type": "memory",
+   "source": "gdr-*.md",
+   "community": "E"
+  }
+ ],
+ "edges": [
+  {
+   "source": "motore",
+   "target": "RULES",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "TRI",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "fxOf",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "IA",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "pet",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "act",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "hit",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "exchangeGen",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "runFight",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "movimento",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "apiPartita",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "apiCrescita",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-dono",
+   "target": "dati-dono:N",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-dono",
+   "target": "dati-dono:BUILDS",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-dono",
+   "target": "dati-dono:EL",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-dono",
+   "target": "dati-dono:PROF",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-dono",
+   "target": "dati-dono:XB/XR",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "dati-dono",
+   "relation": "reads (RETI)"
+  },
+  {
+   "source": "dati-ingegno",
+   "target": "dati-ingegno:N",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-ingegno",
+   "target": "dati-ingegno:BUILDS",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-ingegno",
+   "target": "dati-ingegno:EL",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-ingegno",
+   "target": "dati-ingegno:PROF",
+   "relation": "contains"
+  },
+  {
+   "source": "dati-ingegno",
+   "target": "dati-ingegno:XB/XR",
+   "relation": "contains"
+  },
+  {
+   "source": "motore",
+   "target": "dati-ingegno",
+   "relation": "reads (RETI)"
+  },
+  {
+   "source": "exchangeGen",
+   "target": "movimento",
+   "relation": "calls"
+  },
+  {
+   "source": "exchangeGen",
+   "target": "act",
+   "relation": "calls"
+  },
+  {
+   "source": "act",
+   "target": "hit",
+   "relation": "calls"
+  },
+  {
+   "source": "act",
+   "target": "fxOf",
+   "relation": "calls"
+  },
+  {
+   "source": "exchangeGen",
+   "target": "IA",
+   "relation": "calls"
+  },
+  {
+   "source": "exchangeGen",
+   "target": "pet",
+   "relation": "calls"
+  },
+  {
+   "source": "hit",
+   "target": "TRI",
+   "relation": "uses"
+  },
+  {
+   "source": "hit",
+   "target": "RULES",
+   "relation": "uses"
+  },
+  {
+   "source": "runFight",
+   "target": "exchangeGen",
+   "relation": "calls"
+  },
+  {
+   "source": "apiPartita",
+   "target": "exchangeGen",
+   "relation": "calls"
+  },
+  {
+   "source": "apiCrescita",
+   "target": "dati-dono:BUILDS",
+   "relation": "reads"
+  },
+  {
+   "source": "apiCrescita",
+   "target": "dati-ingegno:BUILDS",
+   "relation": "reads"
+  },
+  {
+   "source": "app",
+   "target": "apiPartita",
+   "relation": "calls"
+  },
+  {
+   "source": "app",
+   "target": "apiCrescita",
+   "relation": "calls"
+  },
+  {
+   "source": "app",
+   "target": "stile",
+   "relation": "styled by"
+  },
+  {
+   "source": "index",
+   "target": "dati-dono",
+   "relation": "loads 1"
+  },
+  {
+   "source": "index",
+   "target": "dati-ingegno",
+   "relation": "loads 2"
+  },
+  {
+   "source": "index",
+   "target": "motore",
+   "relation": "loads 3"
+  },
+  {
+   "source": "index",
+   "target": "app",
+   "relation": "loads 4"
+  },
+  {
+   "source": "test",
+   "target": "runFight",
+   "relation": "tests"
+  },
+  {
+   "source": "test",
+   "target": "apiPartita",
+   "relation": "tests"
+  },
+  {
+   "source": "test",
+   "target": "apiCrescita",
+   "relation": "tests"
+  },
+  {
+   "source": "sw",
+   "target": "index",
+   "relation": "caches"
+  },
+  {
+   "source": "visDono",
+   "target": "dati-dono",
+   "relation": "generates"
+  },
+  {
+   "source": "ragIng",
+   "target": "dati-ingegno",
+   "relation": "generates"
+  },
+  {
+   "source": "alberi",
+   "target": "visDono",
+   "relation": "source of nodes"
+  },
+  {
+   "source": "doc",
+   "target": "motore",
+   "relation": "rules implemented in"
+  },
+  {
+   "source": "doc",
+   "target": "guida",
+   "relation": "summarized in"
+  },
+  {
+   "source": "guidaArt",
+   "target": "guida",
+   "relation": "same content"
+  },
+  {
+   "source": "kimi",
+   "target": "stile",
+   "relation": "instructions for"
+  },
+  {
+   "source": "memoria",
+   "target": "doc",
+   "relation": "decisions of Nico"
+  }
+ ]
+}
