@@ -1,0 +1,86 @@
+{
+  "app/app.js": {
+    "mtime": 1795118288.7009504,
+    "seen": 1795118455.8760579,
+    "ast_hash": "18e57a2ac79e5b43d3fef5b847bee85d",
+    "semantic_hash": "18e57a2ac79e5b43d3fef5b847bee85d"
+  },
+  "app/dati-dono.js": {
+    "mtime": 1795118288.702937,
+    "seen": 1795118455.8760633,
+    "ast_hash": "44aab94e77ff5994d9751586c777b161",
+    "semantic_hash": "44aab94e77ff5994d9751586c777b161"
+  },
+  "app/dati-ingegno.js": {
+    "mtime": 1795118288.7050107,
+    "seen": 1795118455.876066,
+    "ast_hash": "9efdd9c75b95400792b023c545c05490",
+    "semantic_hash": "9efdd9c75b95400792b023c545c05490"
+  },
+  "app/motore.js": {
+    "mtime": 1795118288.713407,
+    "seen": 1795118455.8760676,
+    "ast_hash": "c3db5621eedf8b269d32a67d6e0ee7f8",
+    "semantic_hash": "c3db5621eedf8b269d32a67d6e0ee7f8"
+  },
+  "app/sw.js": {
+    "mtime": 1795118288.7178233,
+    "seen": 1795118455.8760688,
+    "ast_hash": "c1750d6de318c446309cdc14d672012a",
+    "semantic_hash": "c1750d6de318c446309cdc14d672012a"
+  },
+  "app/test-motore.mjs": {
+    "mtime": 1795118288.719986,
+    "seen": 1795118455.8760698,
+    "ast_hash": "fb7f9526e94ef6fed527b5498071a9c8",
+    "semantic_hash": "fb7f9526e94ef6fed527b5498071a9c8"
+  },
+  "app/README.md": {
+    "mtime": 1795118288.698102,
+    "seen": 1795118455.8760712,
+    "ast_hash": "1a35a33115ec28a794dd40405aef904f",
+    "semantic_hash": "1a35a33115ec28a794dd40405aef904f"
+  },
+  "app/guida.html": {
+    "mtime": 1795118288.7072418,
+    "seen": 1795118455.876072,
+    "ast_hash": "be362b29d2a06129396064834a8ccf13",
+    "semantic_hash": "be362b29d2a06129396064834a8ccf13"
+  },
+  "app/index.html": {
+    "mtime": 1795118288.7090578,
+    "seen": 1795118455.8760726,
+    "ast_hash": "ba4d33e197966b4383146379d98883be",
+    "semantic_hash": "ba4d33e197966b4383146379d98883be"
+  },
+  "condivisi/ISTRUZIONI-PER-KIMI.md": {
+    "mtime": 1795118288.8316085,
+    "seen": 1795118455.8760738,
+    "ast_hash": "f22ad0bb43b2e0ed0d5c128f8c673189",
+    "semantic_hash": "f22ad0bb43b2e0ed0d5c128f8c673189"
+  },
+  "memoria/MEMORY.md": {
+    "mtime": 1795118288.8391833,
+    "seen": 1795118455.8760748,
+    "ast_hash": "500b2f2eca8cb4721c3291fe9cb179c0",
+    "semantic_hash": "500b2f2eca8cb4721c3291fe9cb179c0"
+  },
+  "memoria/gdr-app-telefono.md": {
+    "mtime": 1795118288.8392444,
+    "seen": 1795118455.876076,
+    "ast_hash": "3bd9f352ad246f251f42a4aba7b1526e",
+    "semantic_hash": "3bd9f352ad246f251f42a4aba7b1526e"
+  },
+  "memoria/gdr-progetto.md": {
+    "mtime": 1795118288.8392708,
+    "seen": 1795118455.8760767,
+    "ast_hash": "d786b2e7e07501f685408cfabe6f46ac",
+    "semantic_hash": "d786b2e7e07501f685408cfabe6f46ac"
+  },
+  "memoria/gdr-regole-combattimento.md": {
+    "mtime": 1795118288.8392951,
+    "seen": 1795118455.876078,
+    "ast_hash": "a4a48246a9e011f3c29a46972adf8832",
+    "semantic_hash": "a4a48246a9e011f3c29a46972adf8832"
+  }
+}
